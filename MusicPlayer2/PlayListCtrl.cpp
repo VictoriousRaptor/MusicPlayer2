@@ -103,14 +103,37 @@ void CPlayListCtrl::ShowPlaylist(DisplayFormat display_format, bool search_resul
 void CPlayListCtrl::QuickSearch(const wstring & key_word)
 {
 	m_search_result.clear();
+	if (key_word.empty())
+		return;
+	const int gap = 1000;
+	vector<pair<int, size_t> > match;
+	vector<wstring> tmp;
 	for (size_t i{}; i < m_all_song_info.size(); i++)
 	{
-		if (CCommon::StringFindNoCase(m_all_song_info[i].GetFileName(), key_word) != wstring::npos
-			|| CCommon::StringFindNoCase(m_all_song_info[i].title, key_word) != wstring::npos
-			|| CCommon::StringFindNoCase(m_all_song_info[i].artist, key_word) != wstring::npos
-			|| CCommon::StringFindNoCase(m_all_song_info[i].album, key_word) != wstring::npos)
-			m_search_result.push_back(i);
+		tmp = vector<wstring>{ m_all_song_info[i].title, m_all_song_info[i].artist, m_all_song_info[i].album, m_all_song_info[i].GetFileName() };
+		for (int j = 0; j < tmp.size(); ++j)
+		{
+			size_t pos = CCommon::StringFindNoCase(m_all_song_info[i].title, key_word);
+			if (pos != wstring::npos)
+			{
+				match.push_back(pair<int, size_t>{i, pos + j * gap});
+				break;
+			}
+		}
 	}
+
+	auto comp = [](const pair<int, size_t> & a, const pair<int, size_t> & b) { return a.second < b.second; };
+	std::sort(match.begin(), match.end(), comp);
+	std::transform(match.begin(), match.end(), std::back_inserter(m_search_result), [](const pair<int, int>& p) { return p.first; });
+
+	//for (size_t i{}; i < m_all_song_info.size(); i++)
+	//{
+	//	if (CCommon::StringFindNoCase(m_all_song_info[i].GetFileName(), key_word) != wstring::npos
+	//		|| CCommon::StringFindNoCase(m_all_song_info[i].title, key_word) != wstring::npos
+	//		|| CCommon::StringFindNoCase(m_all_song_info[i].artist, key_word) != wstring::npos
+	//		|| CCommon::StringFindNoCase(m_all_song_info[i].album, key_word) != wstring::npos)
+	//		m_search_result.push_back(i);
+	//}
 }
 
 void CPlayListCtrl::GetItemSelectedSearched(vector<int>& item_selected)
