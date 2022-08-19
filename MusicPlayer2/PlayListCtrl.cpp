@@ -121,19 +121,9 @@ void CPlayListCtrl::QuickSearch(const wstring & key_word)
 			}
 		}
 	}
-
 	auto comp = [](const pair<int, size_t> & a, const pair<int, size_t> & b) { return a.second < b.second; };
 	std::sort(match.begin(), match.end(), comp);
 	std::transform(match.begin(), match.end(), std::back_inserter(m_search_result), [](const pair<int, int>& p) { return p.first; });
-
-	//for (size_t i{}; i < m_all_song_info.size(); i++)
-	//{
-	//	if (CCommon::StringFindNoCase(m_all_song_info[i].GetFileName(), key_word) != wstring::npos
-	//		|| CCommon::StringFindNoCase(m_all_song_info[i].title, key_word) != wstring::npos
-	//		|| CCommon::StringFindNoCase(m_all_song_info[i].artist, key_word) != wstring::npos
-	//		|| CCommon::StringFindNoCase(m_all_song_info[i].album, key_word) != wstring::npos)
-	//		m_search_result.push_back(i);
-	//}
 }
 
 void CPlayListCtrl::GetItemSelectedSearched(vector<int>& item_selected)
