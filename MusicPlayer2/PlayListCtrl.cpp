@@ -113,7 +113,7 @@ void CPlayListCtrl::QuickSearch(const wstring & key_word)
 		tmp = vector<wstring>{ m_all_song_info[i].title, m_all_song_info[i].artist, m_all_song_info[i].album, m_all_song_info[i].GetFileName() };
 		for (int j = 0; j < tmp.size(); ++j)
 		{
-			size_t pos = CCommon::StringFindNoCase(m_all_song_info[i].title, key_word);
+			size_t pos = CCommon::StringFindNoCase(tmp[j], key_word);
 			if (pos != wstring::npos)
 			{
 				match.push_back(pair<int, size_t>{i, pos + j * gap});
