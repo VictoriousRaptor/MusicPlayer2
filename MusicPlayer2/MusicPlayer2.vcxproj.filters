@@ -1299,6 +1299,8 @@
       <Filter>资源文件\Icons</Filter>
     </None>
     <None Include="..\LICENSE" />
+    <None Include="..\README.md" />
+    <None Include="..\README_en-us.md" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\AddTag.ico">

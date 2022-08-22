@@ -543,6 +543,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\LICENSE" />
+    <None Include="..\README.md" />
+    <None Include="..\README_en-us.md" />
     <None Include="res\drag.cur" />
     <None Include="res\MusicPlayer2.rc2" />
   </ItemGroup>
