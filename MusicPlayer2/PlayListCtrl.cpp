@@ -116,7 +116,10 @@ void CPlayListCtrl::QuickSearch(const wstring & key_word)
 			size_t pos = CCommon::StringFindNoCase(tmp[j], key_word);
 			if (pos != wstring::npos)
 			{
-				match.push_back(pair<int, size_t>{i, pos + j * gap});
+				if (pos == 0 && key_word.length() == tmp[j].length())
+					match.push_back(pair<int, size_t>{i, pos - j * gap});
+				else
+					match.push_back(pair<int, size_t>{i, pos + j * gap});
 				break;
 			}
 		}

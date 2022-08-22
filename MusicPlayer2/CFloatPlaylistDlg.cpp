@@ -358,6 +358,7 @@ void CFloatPlaylistDlg::OnEnChangeSearchEdit()
     m_playlist_ctrl.QuickSearch(wstring(key_word));
     m_playlist_ctrl.ShowPlaylist(theApp.m_media_lib_setting_data.display_format, m_searched);
     SetDragEnable();
+    m_playlist_ctrl.EnsureVisible(0, FALSE);
 }
 
 //void CFloatPlaylistDlg::OnBnClickedClearSearchButton()
