@@ -52,7 +52,7 @@
           <text type="artist" style="scroll" height="24" alignment="center"/>
         </verticalLayout>
         <verticalLayout margin="16">
-          <horizontalLayout height="96">
+          <horizontalLayout height="96" margin-top="12">
             <albumCover square="true" width="96"/>
             <verticalLayout margin-left="12">
               <text type="title" font_size="12" style="scroll" height="32"/>
