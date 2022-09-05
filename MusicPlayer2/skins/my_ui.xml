@@ -66,7 +66,7 @@
               </horizontalLayout>
             </verticalLayout>
           </horizontalLayout>
-          <lyrics margin-top="16"/>
+          <lyrics margin-top="20"/>
         </verticalLayout>
       </stackElement>
       <progressBar show_play_time="true" play_time_both_side="true" margin-left="8" margin-right="8" margin-top="16" height="22"/>
