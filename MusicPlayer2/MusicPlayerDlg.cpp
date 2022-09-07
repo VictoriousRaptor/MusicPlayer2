@@ -3984,7 +3984,7 @@ UINT CMusicPlayerDlg::ViewOnlineThreadFunc(LPVOID lpParam)
     {
         SongInfo& song{ CPlayer::GetInstance().GetPlayList()[item_selected] };
         CMusicPlayerCmdHelper helper;
-        helper.VeiwOnline(song);
+        helper.ViewOnline(song);
     }
     return 0;
 }

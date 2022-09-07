@@ -8,7 +8,7 @@ public:
     CMusicPlayerCmdHelper(CWnd* pOwner = nullptr);
     ~CMusicPlayerCmdHelper();
 
-    void VeiwOnline(SongInfo& song);
+    void ViewOnline(SongInfo& song);
     void FormatConvert(const std::vector<SongInfo>& songs);
 
     //执行添加到新建播放列表命令，成功返回true

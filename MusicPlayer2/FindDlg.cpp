@@ -95,7 +95,7 @@ UINT CFindDlg::ViewOnlineThreadFunc(LPVOID lpParam)
             SongInfo song{ CSongDataManager::GetInstance().GetSongInfo(file_path) };
             song.file_path = file_path;
             CMusicPlayerCmdHelper cmd_helper(pThis);
-            cmd_helper.VeiwOnline(song);
+            cmd_helper.ViewOnline(song);
         }
     }
     return 0;

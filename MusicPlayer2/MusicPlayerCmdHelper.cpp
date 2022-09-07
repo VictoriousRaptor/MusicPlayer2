@@ -21,7 +21,7 @@ CMusicPlayerCmdHelper::~CMusicPlayerCmdHelper()
 {
 }
 
-void CMusicPlayerCmdHelper::VeiwOnline(SongInfo& song)
+void CMusicPlayerCmdHelper::ViewOnline(SongInfo& song)
 {
     //查找歌曲并获取最佳匹配项的歌曲ID
     if (song.song_id == 0)		//如果没有获取过ID，则获取一次ID
