@@ -2909,6 +2909,7 @@ BEGIN
         MENUITEM "在线查看(&O)",                    ID_EXPLORE_ONLINE
         MENUITEM "转换格式(&F)...",                 ID_FORMAT_CONVERT
         MENUITEM "打开文件位置(&B)",                  ID_EXPLORE_TRACK
+        MENUITEM "从列表中删除(&L)",                  ID_REMOVE_FROM_PLAYLIST
         MENUITEM "从磁盘删除(&D)",                   ID_DELETE_FROM_DISK
         MENUITEM "属性(&Y)...",                   ID_ITEM_PROPERTY
         MENUITEM SEPARATOR
@@ -6316,6 +6317,7 @@ BEGIN
         MENUITEM "View &Online",                ID_EXPLORE_ONLINE
         MENUITEM "&Format Convert...",          ID_FORMAT_CONVERT
         MENUITEM "Open File &Location",         ID_EXPLORE_TRACK
+        MENUITEM "Remo&ve from Playlist",       ID_REMOVE_FROM_PLAYLIST
         MENUITEM "&Delete from Disk",           ID_DELETE_FROM_DISK
         MENUITEM "Propert&y...",                ID_ITEM_PROPERTY
         MENUITEM SEPARATOR

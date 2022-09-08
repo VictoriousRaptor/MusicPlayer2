@@ -166,6 +166,7 @@ void CMediaLibTabDlg::OnInitMenu(CMenu* pMenu)
 	// TODO: 在此处添加消息处理程序代码
 	pMenu->SetDefaultItem(ID_PLAY_ITEM);
     pMenu->EnableMenuItem(ID_DELETE_FROM_DISK, MF_BYCOMMAND | (theApp.m_media_lib_setting_data.disable_delete_from_disk ? MF_GRAYED : MF_ENABLED));
+	pMenu->EnableMenuItem(ID_REMOVE_FROM_PLAYLIST, MF_BYCOMMAND | MF_GRAYED);
 }
 
 

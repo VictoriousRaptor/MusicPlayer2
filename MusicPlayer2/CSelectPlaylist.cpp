@@ -76,6 +76,8 @@ void CSelectPlaylistDlg::DoDataExchange(CDataExchange* pDX)
 void CSelectPlaylistDlg::QuickSearch(const wstring& key_words)
 {
     m_search_result.clear();
+    if (key_words.empty())
+        return;
     const auto& recent_playlists = CPlayer::GetInstance().GetRecentPlaylist().m_recent_playlists;
     for (size_t i{}; i < recent_playlists.size(); i++)
     {
@@ -259,6 +261,7 @@ BEGIN_MESSAGE_MAP(CSelectPlaylistDlg, CMediaLibTabDlg)
     ON_NOTIFY(NM_DBLCLK, IDC_SONG_LIST, &CSelectPlaylistDlg::OnNMDblclkSongList)
     ON_COMMAND(ID_SAVE_AS_NEW_PLAYLIST, &CSelectPlaylistDlg::OnSaveAsNewPlaylist)
     ON_COMMAND(ID_PLAYLIST_SAVE_AS, &CSelectPlaylistDlg::OnPlaylistSaveAs)
+    ON_COMMAND(ID_REMOVE_FROM_PLAYLIST, &CSelectPlaylistDlg::OnRemoveFromPlaylist)
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
@@ -715,6 +718,7 @@ void CSelectPlaylistDlg::OnInitMenu(CMenu* pMenu)
     bool is_delete_enable{ !m_left_selected && !theApp.m_media_lib_setting_data.disable_delete_from_disk && m_right_selected_item >= 0 && m_right_selected_item < static_cast<int>(m_cur_song_list.size())
         && !m_cur_song_list[m_right_selected_item].is_cue && !COSUPlayerHelper::IsOsuFile(m_cur_song_list[m_right_selected_item].file_path) };
     pMenu->EnableMenuItem(ID_DELETE_FROM_DISK, MF_BYCOMMAND | (is_delete_enable ? MF_ENABLED : MF_GRAYED));
+    pMenu->EnableMenuItem(ID_REMOVE_FROM_PLAYLIST, MF_BYCOMMAND | (!m_left_selected && m_right_selected_item >= 0 && m_right_selected_item < static_cast<int>(m_cur_song_list.size()) ? MF_ENABLED : MF_GRAYED));
 }
 
 
@@ -880,6 +884,11 @@ void CSelectPlaylistDlg::OnPlaylistSaveAs()
             file_type = CPlaylistFile::PL_M3U8;
         playlist.SaveToFile(file_path, file_type);
     }
+
+}
+
+void CSelectPlaylistDlg::OnRemoveFromPlaylist()
+{
 
 }
 
