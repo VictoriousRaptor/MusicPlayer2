@@ -32,8 +32,9 @@ static void UpdateSongInfo(SongInfo song)
     //CAudioTag audio_tag(song, hStream);
     //audio_tag.GetAudioTag();
     //BASS_StreamFree(hStream);
-    CSongDataManager::GetInstance().GetSongInfoRef(song.file_path).CopyAudioTag(song);
-    CSongDataManager::GetInstance().SetSongDataModified();
+    SongInfo song_info{ CSongDataManager::GetInstance().GetSongInfo3(song) };
+    song_info.CopyAudioTag(song);
+    CSongDataManager::GetInstance().AddItem(song_info);
 }
 
 IMPLEMENT_DYNAMIC(CPropertyTabDlg, CTabDlg)
@@ -109,10 +110,10 @@ void CPropertyTabDlg::ShowInfo()
 
         //显示文件长度
         wstring song_length;
-        if (m_all_song_info[m_index].lengh.isZero())
+        if (m_all_song_info[m_index].length().isZero())
             song_length = CCommon::LoadText(IDS_CANNOT_GET_SONG_LENGTH);
         else
-            song_length = m_all_song_info[m_index].lengh.toString2();
+            song_length = m_all_song_info[m_index].length().toString2();
         m_song_length_edit.SetWindowText(song_length.c_str());
 
         //显示文件大小
@@ -186,12 +187,12 @@ void CPropertyTabDlg::ShowInfo()
     }
 }
 
-void CPropertyTabDlg::SetEditReadOnly(bool read_only)
+void CPropertyTabDlg::SetEditReadOnly(bool read_only, bool is_cue)
 {
     m_title_edit.SetReadOnly(read_only);
     m_artist_edit.SetReadOnly(read_only);
     m_album_edit.SetReadOnly(read_only);
-    m_track_edit.SetReadOnly(read_only);
+    m_track_edit.SetReadOnly(read_only || is_cue);     //禁止修改cue的音轨号
     m_year_edit.SetReadOnly(read_only);
     //m_genre_edit.SetReadOnly(read_only);
     //((CEdit*)m_genre_combo.GetWindow(GW_CHILD))->SetReadOnly(read_only);      //将combo box设为只读
@@ -209,10 +210,10 @@ void CPropertyTabDlg::SetWreteEnable()
     else
     {
         CFilePathHelper file_path{ m_all_song_info[m_index].file_path };
-        m_write_enable = (!m_all_song_info[m_index].is_cue && !COSUPlayerHelper::IsOsuFile(file_path.GetFilePath()) && CAudioTag::IsFileTypeTagWriteSupport(file_path.GetFileExtension())/* && m_all_song_info[m_index].tag_type != 2*/);
+        m_write_enable = (m_all_song_info[m_index].is_cue || (!COSUPlayerHelper::IsOsuFile(file_path.GetFilePath()) && CAudioTag::IsFileTypeTagWriteSupport(file_path.GetFileExtension())/* && m_all_song_info[m_index].tag_type != 2*/));
     }
     m_write_enable &= !m_read_only;
-    SetEditReadOnly(!m_write_enable);
+    SetEditReadOnly(!m_write_enable, m_all_song_info[m_index].is_cue);
     SetSaveBtnEnable();
     if (m_write_enable)
         m_year_edit.SetLimitText(4);
@@ -454,7 +455,7 @@ int CPropertyTabDlg::SaveModified()
 {
     if (!m_write_enable) return false;
     CWaitCursor wait_cursor;
-    SongInfo song_info;
+    SongInfo song_info{ m_all_song_info[m_index] };
     CString str_temp;
     m_title_edit.GetWindowText(str_temp);
     song_info.title = str_temp;
@@ -516,8 +517,8 @@ int CPropertyTabDlg::SaveModified()
     }
     else
     {
-        song_info.file_path = m_all_song_info[m_index].file_path;
-        CPlayer::ReOpen reopen(song_info.IsSameSong(CPlayer::GetInstance().GetCurrentSongInfo()));       //如果保存的是正在播放的曲目，则保存前需要关闭，保存后重新打开
+        //如果保存的是正在播放的曲目，并且不是cue音轨，则保存前需要关闭，保存后重新打开（cue保存时不操作音频文件，因此不需要关闭再打开）
+        CPlayer::ReOpen reopen(!song_info.is_cue && song_info.IsSameSong(CPlayer::GetInstance().GetCurrentSongInfo()));
         CAudioTag audio_tag(song_info);
         bool saved = audio_tag.WriteAudioTag();
         if (saved)
@@ -529,8 +530,9 @@ int CPropertyTabDlg::SaveModified()
             CAudioTag audio_tag(m_all_song_info[m_index], hStream);
             audio_tag.GetAudioTag();
             BASS_StreamFree(hStream);
-            CSongDataManager::GetInstance().GetSongInfoRef2(m_all_song_info[m_index].file_path).CopyAudioTag(m_all_song_info[m_index]);
-            CSongDataManager::GetInstance().SetSongDataModified();
+            SongInfo song_info{ CSongDataManager::GetInstance().GetSongInfo3(m_all_song_info[m_index]) };
+            song_info.CopyAudioTag(m_all_song_info[m_index]);
+            CSongDataManager::GetInstance().AddItem(song_info);
 
             m_modified = false;
             SetSaveBtnEnable();
@@ -768,7 +770,7 @@ void CPropertyTabDlg::ModifyTagInfo(const SongInfo& song)
 bool CPropertyTabDlg::GetTagFromLyrics(SongInfo& song, SongInfo& result)
 {
     //从歌词获取标签信息前，如果还未获取过歌词，从在这里获取一次歌词
-    if (!song.is_cue && song.lyric_file.empty())
+    if (!song.is_cue && song.lyric_file.empty())    // cue不能进行标签编辑
     {
         CMusicPlayerCmdHelper helper;
         wstring lyric_path = helper.SearchLyricFile(song, theApp.m_lyric_setting_data.lyric_fuzzy_match);
@@ -776,7 +778,9 @@ bool CPropertyTabDlg::GetTagFromLyrics(SongInfo& song, SongInfo& result)
         if (!lyric_path.empty())
         {
             //获取到歌词后同时更新song data
-            CSongDataManager::GetInstance().GetSongInfoRef(song.file_path).lyric_file = lyric_path;
+            SongInfo song_info{ CSongDataManager::GetInstance().GetSongInfo3(song) };
+            song_info.lyric_file = lyric_path;
+            CSongDataManager::GetInstance().AddItem(song_info);
             m_lyric_file_edit.SetWindowText(lyric_path.c_str());
         }
     }

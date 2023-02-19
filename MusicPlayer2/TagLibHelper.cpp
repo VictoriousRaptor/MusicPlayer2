@@ -46,12 +46,12 @@ using namespace TagLib;
 #define STR_FLAC_RATING_TAG "RATING"
 //#define STR_WMA_RATING_TAG "RATING WMP"
 
-//将taglib中的字符串转换成wstring类型。
+//将taglib中的字符串转换成std::wstring类型。
 //由于taglib将所有非unicode编码全部作为Latin编码处理，因此无法正确处理本地代码页
 //这里将Latin编码的字符串按本地代码页处理
-static wstring TagStringToWstring(const String& str, bool to_local)
+static std::wstring TagStringToWstring(const String& str, bool to_local)
 {
-    wstring result;
+    std::wstring result;
     if (to_local && str.isLatin1())
         result = CCommon::StrToUnicode(str.to8Bit(), CodeType::ANSI);
     else
@@ -73,7 +73,7 @@ static void SongInfoToTag(const SongInfo& song_info, Tag* tag)
     }
 }
 
-static bool IsStringNumber(wstring str, int num)
+static bool IsStringNumber(std::wstring str, int num)
 {
     if (!str.empty() && str.front() == L'(')
         str = str.substr(1);
@@ -127,7 +127,7 @@ static void FileToByteVector(ByteVector& data, const std::wstring& file_path)
     file.close();
 }
 
-int GetPicType(const wstring& mimeType)
+int GetPicType(const std::wstring& mimeType)
 {
     int type{ -1 };
     if (mimeType == L"image/jpeg" || mimeType == L"image/jpg")
@@ -156,7 +156,7 @@ static void GetId3v2AlbumCover(ID3v2::Tag* id3v2, string& cover_contents, int& t
                 auto pic_data = frame->picture();
                 //获取专辑封面
                 cover_contents.assign(pic_data.data(), pic_data.size());
-                wstring img_type = frame->mimeType().toCWString();
+                std::wstring img_type = frame->mimeType().toCWString();
                 type = GetPicType(img_type);
             }
         }
@@ -176,7 +176,7 @@ static void DeleteId3v2AlbumCover(ID3v2::Tag* id3v2tag)
     }
 }
 
-static void WriteId3v2AlbumCover(ID3v2::Tag* id3v2tag, const wstring& album_cover_path)
+static void WriteId3v2AlbumCover(ID3v2::Tag* id3v2tag, const std::wstring& album_cover_path)
 {
     if (id3v2tag != nullptr)
     {
@@ -187,7 +187,7 @@ static void WriteId3v2AlbumCover(ID3v2::Tag* id3v2tag, const wstring& album_cove
         ID3v2::AttachedPictureFrame* pic_frame = new ID3v2::AttachedPictureFrame();
         pic_frame->setPicture(pic_data);
         pic_frame->setType(ID3v2::AttachedPictureFrame::FrontCover);
-        wstring ext = CFilePathHelper(album_cover_path).GetFileExtension();
+        std::wstring ext = CFilePathHelper(album_cover_path).GetFileExtension();
         pic_frame->setMimeType(L"image/" + ext);
         id3v2tag->addFrame(pic_frame);
     }
@@ -229,7 +229,7 @@ static void GetApeTagAlbumCover(APE::Tag* tag, string& cover_contents, int& type
     }
 }
 
-static void WriteApeTagAlbumCover(APE::Tag* tag, const wstring& album_cover_path, bool remove_exist)
+static void WriteApeTagAlbumCover(APE::Tag* tag, const std::wstring& album_cover_path, bool remove_exist)
 {
     if (remove_exist)
     {
@@ -243,7 +243,7 @@ static void WriteApeTagAlbumCover(APE::Tag* tag, const wstring& album_cover_path
 
         ByteVector pic_item_data;
         pic_item_data = "Cover Art (Front).";
-        wstring file_type = CFilePathHelper(album_cover_path).GetFileExtension();
+        std::wstring file_type = CFilePathHelper(album_cover_path).GetFileExtension();
         for (wchar_t ch : file_type)
             pic_item_data.append(static_cast<char>(ch));
         pic_item_data.append('\0');
@@ -254,7 +254,7 @@ static void WriteApeTagAlbumCover(APE::Tag* tag, const wstring& album_cover_path
     }
 }
 
-static void WriteXiphCommentAlbumCover(Ogg::XiphComment* tag, const wstring& album_cover_path, bool remove_exist)
+static void WriteXiphCommentAlbumCover(Ogg::XiphComment* tag, const std::wstring& album_cover_path, bool remove_exist)
 {
     //先删除专辑封面
     if (remove_exist)
@@ -269,7 +269,7 @@ static void WriteXiphCommentAlbumCover(Ogg::XiphComment* tag, const wstring& alb
         FLAC::Picture* newpic = new FLAC::Picture();
         newpic->setType(FLAC::Picture::FrontCover);
         newpic->setData(pic_data);
-        wstring ext = CFilePathHelper(album_cover_path).GetFileExtension();
+        std::wstring ext = CFilePathHelper(album_cover_path).GetFileExtension();
         newpic->setMimeType(L"image/" + ext);
         tag->addPicture(newpic);
     }
@@ -288,15 +288,15 @@ static void GetXiphCommentAlbumCover(Ogg::XiphComment* tag, string& cover_conten
             //获取专辑封面
             cover_contents.assign(pic_data.data(), pic_data.size());
 
-            wstring img_type = pic->mimeType().toCWString();
+            std::wstring img_type = pic->mimeType().toCWString();
             type = GetPicType(img_type);
         }
     }
 }
 
-static wstring GetId3v2Lyric(ID3v2::Tag* id3v2)
+static std::wstring GetId3v2Lyric(ID3v2::Tag* id3v2)
 {
-    wstring lyrics;
+    std::wstring lyrics;
     if (id3v2 != nullptr)
     {
         auto frame_list_map = id3v2->frameListMap();
@@ -308,7 +308,7 @@ static wstring GetId3v2Lyric(ID3v2::Tag* id3v2)
 }
 
 
-static void WriteId3v2Lyric(ID3v2::Tag* id3v2, const wstring& lyric_contents)
+static void WriteId3v2Lyric(ID3v2::Tag* id3v2, const std::wstring& lyric_contents)
 {
     if (id3v2 != nullptr)
     {
@@ -332,15 +332,15 @@ static void WriteId3v2Lyric(ID3v2::Tag* id3v2, const wstring& lyric_contents)
 
 
 template<class T>
-void GetTagPropertyMap(T* tag, std::map<wstring, wstring>& property_map)
+void GetTagPropertyMap(T* tag, std::map<std::wstring, std::wstring>& property_map)
 {
     if (tag != nullptr)
     {
         auto properties = tag->properties();
         for (const auto& prop : properties)
         {
-            wstring key = prop.first.toWString();
-            wstring value = TagStringToWstring(prop.second.toString(L";"), true);
+            std::wstring key = prop.first.toWString();
+            std::wstring value = TagStringToWstring(prop.second.toString(L";"), true);
             auto iter = property_map.find(key);
             if (iter == property_map.end())
                 property_map[key] = value;
@@ -349,6 +349,39 @@ void GetTagPropertyMap(T* tag, std::map<wstring, wstring>& property_map)
         }
     }
 }
+
+static std::wstring GetMapValue(const std::wstring& key, const std::map<std::wstring, std::wstring>& property_map)
+{
+    auto iter = property_map.find(key);
+    if (iter != property_map.end())
+        return iter->second;
+    return std::wstring();
+}
+
+//将标签属性中额外的信息保存到SongInfo中
+static void OtherPropertyToSongInfo(SongInfo& song_info, const std::map<std::wstring, std::wstring>& property_map)
+{
+    //获取唱片集艺术家
+    song_info.album_artist = GetMapValue(L"ALBUMARTIST", property_map);
+
+    //获取音轨总数
+    std::wstring track_number = GetMapValue(L"TRACKNUMBER", property_map);
+    size_t index = track_number.find(L'/');
+    if (index != std::wstring::npos)
+    {
+        song_info.total_tracks = static_cast<BYTE>(_wtoi(track_number.substr(index + 1).c_str()));
+    }
+
+    //获取CD序号和CD总数
+    std::wstring disc_number = GetMapValue(L"DISCNUMBER", property_map);
+    index = disc_number.find(L'/');
+    if (index != std::wstring::npos)
+    {
+        song_info.total_discs = static_cast<BYTE>(_wtoi(disc_number.substr(index + 1).c_str()));
+    }
+    song_info.disc_num = static_cast<BYTE>(_wtoi(disc_number.substr(0, index).c_str()));
+}
+
 
 //解析Windows资源管理器设置的分级信息
 static int ParseAudioRating(int rate_raw)
@@ -442,6 +475,109 @@ static void WriteId3v2Rating(ID3v2::Tag* id3v2, int rate)
     }
 }
 
+static void getFlacPropertyMap(FLAC::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    if (file.hasXiphComment())
+        GetTagPropertyMap(file.xiphComment(), property_map);
+    if (file.hasID3v2Tag())
+        GetTagPropertyMap(file.ID3v2Tag(), property_map);
+    if (file.hasID3v1Tag())
+        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+}
+
+static void getM4aPropertyMap(MP4::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    auto tag = file.tag();
+    GetTagPropertyMap(tag, property_map);
+}
+
+static void getMpegPropertyMap(MPEG::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    if (file.hasID3v2Tag())
+        GetTagPropertyMap(file.ID3v2Tag(), property_map);
+    if (file.hasAPETag())
+        GetTagPropertyMap(file.APETag(), property_map);
+    if (file.hasID3v1Tag())
+        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+}
+
+static void getAsfPropertyMap(ASF::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    auto tag = file.tag();
+    GetTagPropertyMap(tag, property_map);
+}
+
+static void getApePropertyMap(APE::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    if (file.hasAPETag())
+        GetTagPropertyMap(file.APETag(), property_map);
+    if (file.hasID3v1Tag())
+        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+}
+
+static void getWavPropertyMap(RIFF::WAV::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    if (file.hasID3v2Tag())
+        GetTagPropertyMap(file.ID3v2Tag(), property_map);
+    if (file.hasInfoTag())
+        GetTagPropertyMap(file.InfoTag(), property_map);
+}
+
+static void getOggPropertyMap(Vorbis::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    auto tag = file.tag();
+    GetTagPropertyMap(tag, property_map);
+}
+
+static void getMpcPropertyMap(MPC::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    if (file.hasAPETag())
+        GetTagPropertyMap(file.APETag(), property_map);
+    if (file.hasID3v1Tag())
+        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+}
+
+static void getOpusPropertyMap(Ogg::Opus::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    auto tag = file.tag();
+    GetTagPropertyMap(tag, property_map);
+}
+
+static void getWavPackPropertyMap(WavPack::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    if (file.hasAPETag())
+        GetTagPropertyMap(file.APETag(), property_map);
+    if (file.hasID3v1Tag())
+        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+}
+
+static void getTtaPropertyMap(TrueAudio::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    if (file.hasID3v2Tag())
+        GetTagPropertyMap(file.ID3v2Tag(), property_map);
+    if (file.hasID3v1Tag())
+        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+}
+
+static void getAiffPropertyMap(RIFF::AIFF::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    auto tag = file.tag();
+    GetTagPropertyMap(tag, property_map);
+}
+
+static void getSpxPropertyMap(Ogg::Speex::File& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    auto tag = file.tag();
+    GetTagPropertyMap(tag, property_map);
+}
+
+static void getAnyFilePropertyMap(FileRef& file, std::map<std::wstring, std::wstring>& property_map)
+{
+    auto tag = file.tag();
+    GetTagPropertyMap(tag, property_map);
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
@@ -461,7 +597,7 @@ void CTagLibHelper::SetWriteId3V2_3(bool write_id3v2_3)
     m_write_id3v2_3 = write_id3v2_3;
 }
 
-string CTagLibHelper::GetM4aAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetM4aAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     MP4::File file(file_path.c_str());
@@ -499,7 +635,7 @@ string CTagLibHelper::GetM4aAlbumCover(const wstring& file_path, int& type)
     return cover_contents;
 }
 
-string CTagLibHelper::GetFlacAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetFlacAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     FLAC::File file(file_path.c_str());
@@ -513,14 +649,14 @@ string CTagLibHelper::GetFlacAlbumCover(const wstring& file_path, int& type)
             //获取专辑封面
             cover_contents.assign(pic_data.data(), pic_data.size());
 
-            wstring img_type = pic->mimeType().toCWString();
+            std::wstring img_type = pic->mimeType().toCWString();
             type = GetPicType(img_type);
         }
     }
     return cover_contents;
 }
 
-string CTagLibHelper::GetMp3AlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetMp3AlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     MPEG::File file(file_path.c_str());
@@ -529,7 +665,7 @@ string CTagLibHelper::GetMp3AlbumCover(const wstring& file_path, int& type)
     return cover_contents;
 }
 
-string CTagLibHelper::GetAsfAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetAsfAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     ASF::File file(file_path.c_str());
@@ -542,14 +678,14 @@ string CTagLibHelper::GetAsfAlbumCover(const wstring& file_path, int& type)
             ASF::Picture picture = attr.front().toPicture();
             auto pic_data = picture.picture();
             cover_contents.assign(pic_data.data(), pic_data.size());
-            wstring img_type = picture.mimeType().toCWString();
+            std::wstring img_type = picture.mimeType().toCWString();
             type = GetPicType(img_type);
         }
     }
     return cover_contents;
 }
 
-string CTagLibHelper::GetWavAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetWavAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     RIFF::WAV::File file(file_path.c_str());
@@ -558,7 +694,7 @@ string CTagLibHelper::GetWavAlbumCover(const wstring& file_path, int& type)
     return cover_contents;
 }
 
-string CTagLibHelper::GetTtaAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetTtaAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     TrueAudio::File file(file_path.c_str());
@@ -567,7 +703,7 @@ string CTagLibHelper::GetTtaAlbumCover(const wstring& file_path, int& type)
     return cover_contents;
 }
 
-string CTagLibHelper::GetApeAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetApeAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     APE::File file(file_path.c_str());
@@ -577,7 +713,7 @@ string CTagLibHelper::GetApeAlbumCover(const wstring& file_path, int& type)
 }
 
 
-string CTagLibHelper::GetOggAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetOggAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     Ogg::Vorbis::File file(file_path.c_str());
@@ -589,7 +725,7 @@ string CTagLibHelper::GetOggAlbumCover(const wstring& file_path, int& type)
     return cover_contents;
 }
 
-string CTagLibHelper::GetOpusAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetOpusAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     Ogg::Opus::File file(file_path.c_str());
@@ -601,7 +737,7 @@ string CTagLibHelper::GetOpusAlbumCover(const wstring& file_path, int& type)
     return cover_contents;
 }
 
-string CTagLibHelper::GetSpxAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetSpxAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     Ogg::Speex::File file(file_path.c_str());
@@ -613,7 +749,7 @@ string CTagLibHelper::GetSpxAlbumCover(const wstring& file_path, int& type)
     return cover_contents;
 }
 
-string CTagLibHelper::GetAiffAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetAiffAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     RIFF::AIFF::File file(file_path.c_str());
@@ -623,7 +759,7 @@ string CTagLibHelper::GetAiffAlbumCover(const wstring& file_path, int& type)
 
 }
 
-string CTagLibHelper::GetMpcAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetMpcAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     MPC::File file(file_path.c_str());
@@ -632,7 +768,7 @@ string CTagLibHelper::GetMpcAlbumCover(const wstring& file_path, int& type)
     return cover_contents;
 }
 
-string CTagLibHelper::GetWavePackAlbumCover(const wstring& file_path, int& type)
+string CTagLibHelper::GetWavePackAlbumCover(const std::wstring& file_path, int& type)
 {
     string cover_contents;
     WavPack::File file(file_path.c_str());
@@ -653,6 +789,9 @@ void CTagLibHelper::GetFlacTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, true);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getFlacPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetM4aTagInfo(SongInfo& song_info)
@@ -665,6 +804,9 @@ void CTagLibHelper::GetM4aTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, false);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getM4aPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetMpegTagInfo(SongInfo& song_info)
@@ -682,6 +824,9 @@ void CTagLibHelper::GetMpegTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, true);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getMpegPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetAsfTagInfo(SongInfo& song_info)
@@ -692,6 +837,9 @@ void CTagLibHelper::GetAsfTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, false);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getAsfPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetApeTagInfo(SongInfo& song_info)
@@ -707,6 +855,9 @@ void CTagLibHelper::GetApeTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, true);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getApePropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetWavTagInfo(SongInfo& song_info)
@@ -721,6 +872,9 @@ void CTagLibHelper::GetWavTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, false);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getWavPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetOggTagInfo(SongInfo& song_info)
@@ -731,6 +885,9 @@ void CTagLibHelper::GetOggTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, false);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getOggPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetMpcTagInfo(SongInfo& song_info)
@@ -745,6 +902,9 @@ void CTagLibHelper::GetMpcTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, true);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getMpcPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetOpusTagInfo(SongInfo& song_info)
@@ -755,6 +915,9 @@ void CTagLibHelper::GetOpusTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, false);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getOpusPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetWavPackTagInfo(SongInfo& song_info)
@@ -769,6 +932,9 @@ void CTagLibHelper::GetWavPackTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, true);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getWavPackPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetTtaTagInfo(SongInfo& song_info)
@@ -783,6 +949,9 @@ void CTagLibHelper::GetTtaTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, true);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getTtaPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetAiffTagInfo(SongInfo& song_info)
@@ -795,6 +964,9 @@ void CTagLibHelper::GetAiffTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, false);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getAiffPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetSpxTagInfo(SongInfo& song_info)
@@ -805,6 +977,9 @@ void CTagLibHelper::GetSpxTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, false);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getSpxPropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
 void CTagLibHelper::GetAnyFileTagInfo(SongInfo& song_info)
@@ -815,132 +990,105 @@ void CTagLibHelper::GetAnyFileTagInfo(SongInfo& song_info)
     {
         TagToSongInfo(song_info, tag, false);
     }
+    std::map<std::wstring, std::wstring> property_map;
+    getAnyFilePropertyMap(file, property_map);
+    OtherPropertyToSongInfo(song_info, property_map);
 }
 
-void CTagLibHelper::GetFlacPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetFlacPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     FLAC::File file(file_path.c_str());
-    if (file.hasXiphComment())
-        GetTagPropertyMap(file.xiphComment(), property_map);
-    if (file.hasID3v2Tag())
-        GetTagPropertyMap(file.ID3v2Tag(), property_map);
-    if (file.hasID3v1Tag())
-        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+    getFlacPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetM4aPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetM4aPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     MP4::File file(file_path.c_str());
-    auto tag = file.tag();
-    GetTagPropertyMap(tag, property_map);
+    getM4aPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetMpegPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetMpegPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     MPEG::File file(file_path.c_str());
-    if (file.hasID3v2Tag())
-        GetTagPropertyMap(file.ID3v2Tag(), property_map);
-    if (file.hasAPETag())
-        GetTagPropertyMap(file.APETag(), property_map);
-    if (file.hasID3v1Tag())
-        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+    getMpegPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetAsfPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetAsfPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     ASF::File file(file_path.c_str());
-    auto tag = file.tag();
-    GetTagPropertyMap(tag, property_map);
+    getAsfPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetApePropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetApePropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     APE::File file(file_path.c_str());
-    if (file.hasAPETag())
-        GetTagPropertyMap(file.APETag(), property_map);
-    if (file.hasID3v1Tag())
-        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+    getApePropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetWavPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetWavPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     RIFF::WAV::File file(file_path.c_str());
-    auto tag = file.tag();
-    GetTagPropertyMap(tag, property_map);
+    getWavPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetOggPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetOggPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     Vorbis::File file(file_path.c_str());
-    auto tag = file.tag();
-    GetTagPropertyMap(tag, property_map);
+    getOggPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetMpcPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetMpcPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     MPC::File file(file_path.c_str());
-    if (file.hasAPETag())
-        GetTagPropertyMap(file.APETag(), property_map);
-    if (file.hasID3v1Tag())
-        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+    getMpcPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetOpusPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetOpusPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     Ogg::Opus::File file(file_path.c_str());
-    auto tag = file.tag();
-    GetTagPropertyMap(tag, property_map);
+    getOpusPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetWavPackPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetWavPackPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     WavPack::File file(file_path.c_str());
-    if (file.hasAPETag())
-        GetTagPropertyMap(file.APETag(), property_map);
-    if (file.hasID3v1Tag())
-        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+    getWavPackPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetTtaPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetTtaPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     TrueAudio::File file(file_path.c_str());
-    if (file.hasID3v2Tag())
-        GetTagPropertyMap(file.ID3v2Tag(), property_map);
-    if (file.hasID3v1Tag())
-        GetTagPropertyMap(file.ID3v1Tag(), property_map);
+    getTtaPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetAiffPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetAiffPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     RIFF::AIFF::File file(file_path.c_str());
-    auto tag = file.tag();
-    GetTagPropertyMap(tag, property_map);
+    getAiffPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetSpxPropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetSpxPropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     Ogg::Speex::File file(file_path.c_str());
-    auto tag = file.tag();
-    GetTagPropertyMap(tag, property_map);
+    getSpxPropertyMap(file, property_map);
 }
 
-void CTagLibHelper::GetAnyFilePropertyMap(const wstring& file_path, std::map<wstring, wstring>& property_map)
+void CTagLibHelper::GetAnyFilePropertyMap(const std::wstring& file_path, std::map<std::wstring, std::wstring>& property_map)
 {
     FileRef file(file_path.c_str());
-    auto tag = file.tag();
-    GetTagPropertyMap(tag, property_map);
+    getAnyFilePropertyMap(file, property_map);
 }
 
-wstring CTagLibHelper::GetMpegLyric(const wstring& file_path)
+std::wstring CTagLibHelper::GetMpegLyric(const std::wstring& file_path)
 {
     MPEG::File file(file_path.c_str());
     auto id3v2 = file.ID3v2Tag();
     return GetId3v2Lyric(id3v2);
 }
 
-wstring CTagLibHelper::GetM4aLyric(const wstring& file_path)
+std::wstring CTagLibHelper::GetM4aLyric(const std::wstring& file_path)
 {
-    wstring lyrics;
+    std::wstring lyrics;
     MP4::File file(file_path.c_str());
     auto tag = file.tag();
     if (tag != nullptr)
@@ -953,9 +1101,9 @@ wstring CTagLibHelper::GetM4aLyric(const wstring& file_path)
     return lyrics;
 }
 
-wstring CTagLibHelper::GetFlacLyric(const wstring& file_path)
+std::wstring CTagLibHelper::GetFlacLyric(const std::wstring& file_path)
 {
-    wstring lyrics;
+    std::wstring lyrics;
     FLAC::File file(file_path.c_str());
     auto properties = file.properties();
     if (file.isValid())
@@ -969,9 +1117,9 @@ wstring CTagLibHelper::GetFlacLyric(const wstring& file_path)
     return lyrics;
 }
 
-wstring CTagLibHelper::GetAsfLyric(const wstring& file_path)
+std::wstring CTagLibHelper::GetAsfLyric(const std::wstring& file_path)
 {
-    wstring lyrics;
+    std::wstring lyrics;
     ASF::File file(file_path.c_str());
     if (file.isValid())
     {
@@ -986,7 +1134,7 @@ wstring CTagLibHelper::GetAsfLyric(const wstring& file_path)
 }
 
 
-wstring CTagLibHelper::GetWavLyric(const wstring& file_path)
+std::wstring CTagLibHelper::GetWavLyric(const std::wstring& file_path)
 {
     RIFF::WAV::File file(file_path.c_str());
     auto id3v2 = file.ID3v2Tag();
@@ -994,9 +1142,9 @@ wstring CTagLibHelper::GetWavLyric(const wstring& file_path)
 
 }
 
-bool CTagLibHelper::WriteMpegLyric(const wstring& file_path, const wstring& lyric_contents)
+bool CTagLibHelper::WriteMpegLyric(const std::wstring& file_path, const std::wstring& lyric_contents)
 {
-    wstring lyrics;
+    std::wstring lyrics;
     MPEG::File file(file_path.c_str());
     auto id3v2 = file.ID3v2Tag();
     WriteId3v2Lyric(id3v2, lyric_contents);
@@ -1007,7 +1155,7 @@ bool CTagLibHelper::WriteMpegLyric(const wstring& file_path, const wstring& lyri
     return saved;
 }
 
-bool CTagLibHelper::WriteFlacLyric(const wstring& file_path, const wstring& lyric_contents)
+bool CTagLibHelper::WriteFlacLyric(const std::wstring& file_path, const std::wstring& lyric_contents)
 {
     FLAC::File file(file_path.c_str());
     if (file.isValid())
@@ -1030,7 +1178,7 @@ bool CTagLibHelper::WriteFlacLyric(const wstring& file_path, const wstring& lyri
     return false;
 }
 
-bool CTagLibHelper::WriteM4aLyric(const wstring& file_path, const wstring& lyric_contents)
+bool CTagLibHelper::WriteM4aLyric(const std::wstring& file_path, const std::wstring& lyric_contents)
 {
     MP4::File file(file_path.c_str());
     auto tag = file.tag();
@@ -1053,7 +1201,7 @@ bool CTagLibHelper::WriteM4aLyric(const wstring& file_path, const wstring& lyric
     return false;
 }
 
-bool CTagLibHelper::WriteAsfLyric(const wstring& file_path, const wstring& lyric_contents)
+bool CTagLibHelper::WriteAsfLyric(const std::wstring& file_path, const std::wstring& lyric_contents)
 {
     ASF::File file(file_path.c_str());
     if (file.isValid())
@@ -1076,9 +1224,9 @@ bool CTagLibHelper::WriteAsfLyric(const wstring& file_path, const wstring& lyric
     return false;
 }
 
-bool CTagLibHelper::WriteWavLyric(const wstring& file_path, const wstring& lyric_contents)
+bool CTagLibHelper::WriteWavLyric(const std::wstring& file_path, const std::wstring& lyric_contents)
 {
-    wstring lyrics;
+    std::wstring lyrics;
     RIFF::WAV::File file(file_path.c_str());
     auto id3v2 = file.ID3v2Tag();
     WriteId3v2Lyric(id3v2, lyric_contents);
@@ -1086,7 +1234,7 @@ bool CTagLibHelper::WriteWavLyric(const wstring& file_path, const wstring& lyric
     return saved;
 }
 
-bool CTagLibHelper::WriteMp3AlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist)
+bool CTagLibHelper::WriteMp3AlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist)
 {
     MPEG::File file(file_path.c_str());
     if (!file.isValid())
@@ -1110,7 +1258,7 @@ bool CTagLibHelper::WriteMp3AlbumCover(const wstring& file_path, const wstring& 
     return saved;
 }
 
-bool CTagLibHelper::WriteFlacAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist)
+bool CTagLibHelper::WriteFlacAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist)
 {
     FLAC::File file(file_path.c_str());
     if (!file.isValid())
@@ -1129,7 +1277,7 @@ bool CTagLibHelper::WriteFlacAlbumCover(const wstring& file_path, const wstring&
         FLAC::Picture* newpic = new FLAC::Picture();
         newpic->setType(FLAC::Picture::FrontCover);
         newpic->setData(pic_data);
-        wstring ext = CFilePathHelper(album_cover_path).GetFileExtension();
+        std::wstring ext = CFilePathHelper(album_cover_path).GetFileExtension();
         newpic->setMimeType(L"image/" + ext);
         file.addPicture(newpic);
     }
@@ -1137,7 +1285,7 @@ bool CTagLibHelper::WriteFlacAlbumCover(const wstring& file_path, const wstring&
     return saved;
 }
 
-bool CTagLibHelper::WriteM4aAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteM4aAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     MP4::File file(file_path.c_str());
     if (!file.isValid())
@@ -1160,7 +1308,7 @@ bool CTagLibHelper::WriteM4aAlbumCover(const wstring& file_path, const wstring& 
         ByteVector pic_data;
         FileToByteVector(pic_data, album_cover_path);
         MP4::CoverArt::Format format = MP4::CoverArt::Format::Unknown;
-        wstring ext = CFilePathHelper(album_cover_path).GetFileExtension();
+        std::wstring ext = CFilePathHelper(album_cover_path).GetFileExtension();
         if (ext == L"jpg" || ext == L"jpeg")
             format = MP4::CoverArt::Format::JPEG;
         else if (ext == L"png")
@@ -1179,7 +1327,7 @@ bool CTagLibHelper::WriteM4aAlbumCover(const wstring& file_path, const wstring& 
     return saved;
 }
 
-bool CTagLibHelper::WriteAsfAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteAsfAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     ASF::File file(file_path.c_str());
     if (!file.isValid())
@@ -1203,7 +1351,7 @@ bool CTagLibHelper::WriteAsfAlbumCover(const wstring& file_path, const wstring& 
         FileToByteVector(pic_data, album_cover_path);
 
         ASF::Picture picture;
-        wstring str_mine_type = L"image/" + CFilePathHelper(album_cover_path).GetFileExtension();
+        std::wstring str_mine_type = L"image/" + CFilePathHelper(album_cover_path).GetFileExtension();
         picture.setMimeType(str_mine_type);
         picture.setType(ASF::Picture::FrontCover);
         picture.setPicture(pic_data);
@@ -1213,7 +1361,7 @@ bool CTagLibHelper::WriteAsfAlbumCover(const wstring& file_path, const wstring& 
     return saved;
 }
 
-bool CTagLibHelper::WriteWavAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteWavAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     RIFF::WAV::File file(file_path.c_str());
     if (!file.isValid())
@@ -1233,7 +1381,7 @@ bool CTagLibHelper::WriteWavAlbumCover(const wstring& file_path, const wstring& 
     return saved;
 }
 
-bool CTagLibHelper::WriteTtaAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteTtaAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     TrueAudio::File file(file_path.c_str());
     if (!file.isValid())
@@ -1254,7 +1402,7 @@ bool CTagLibHelper::WriteTtaAlbumCover(const wstring& file_path, const wstring& 
     return false;
 }
 
-bool CTagLibHelper::WriteApeAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteApeAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     APE::File file(file_path.c_str());
     if (!file.isValid())
@@ -1266,7 +1414,7 @@ bool CTagLibHelper::WriteApeAlbumCover(const wstring& file_path, const wstring& 
     return saved;
 }
 
-bool CTagLibHelper::WriteOggAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteOggAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     Ogg::Vorbis::File file(file_path.c_str());
     if (!file.isValid())
@@ -1282,7 +1430,7 @@ bool CTagLibHelper::WriteOggAlbumCover(const wstring& file_path, const wstring& 
     return false;
 }
 
-bool CTagLibHelper::WriteOpusAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist)
+bool CTagLibHelper::WriteOpusAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist)
 {
     Ogg::Opus::File file(file_path.c_str());
     if (!file.isValid())
@@ -1298,7 +1446,7 @@ bool CTagLibHelper::WriteOpusAlbumCover(const wstring& file_path, const wstring&
     return false;
 }
 
-bool CTagLibHelper::WriteSpxAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteSpxAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     Ogg::Speex::File file(file_path.c_str());
     if (!file.isValid())
@@ -1314,7 +1462,7 @@ bool CTagLibHelper::WriteSpxAlbumCover(const wstring& file_path, const wstring& 
     return false;
 }
 
-bool CTagLibHelper::WriteAiffAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteAiffAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     RIFF::AIFF::File file(file_path.c_str());
     if (!file.isValid())
@@ -1334,7 +1482,7 @@ bool CTagLibHelper::WriteAiffAlbumCover(const wstring& file_path, const wstring&
     return saved;
 }
 
-bool CTagLibHelper::WriteMpcAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteMpcAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     MPC::File file(file_path.c_str());
     if (!file.isValid())
@@ -1346,7 +1494,7 @@ bool CTagLibHelper::WriteMpcAlbumCover(const wstring& file_path, const wstring& 
     return saved;
 }
 
-bool CTagLibHelper::WriteWavePackAlbumCover(const wstring& file_path, const wstring& album_cover_path, bool remove_exist /*= true*/)
+bool CTagLibHelper::WriteWavePackAlbumCover(const std::wstring& file_path, const std::wstring& album_cover_path, bool remove_exist /*= true*/)
 {
     WavPack::File file(file_path.c_str());
     if (!file.isValid())
@@ -1480,9 +1628,9 @@ bool CTagLibHelper::WriteSpxTag(const SongInfo& song_info)
     return saved;
 }
 
-wstring CTagLibHelper::GetApeCue(const wstring& file_path)
+std::wstring CTagLibHelper::GetApeCue(const std::wstring& file_path)
 {
-    wstring cue_contents;
+    std::wstring cue_contents;
     APE::File file(file_path.c_str());
     auto tag = file.APETag();
     if (tag != nullptr)
@@ -1494,14 +1642,14 @@ wstring CTagLibHelper::GetApeCue(const wstring& file_path)
     return cue_contents;
 }
 
-int CTagLibHelper::GetMepgRating(const wstring& file_path)
+int CTagLibHelper::GetMepgRating(const std::wstring& file_path)
 {
     MPEG::File file(file_path.c_str());
     auto id3v2 = file.ID3v2Tag();
     return GetId3v2Rating(id3v2);
 }
 
-int CTagLibHelper::GetFlacRating(const wstring& file_path)
+int CTagLibHelper::GetFlacRating(const std::wstring& file_path)
 {
     FLAC::File file(file_path.c_str());
     auto properties = file.properties();
@@ -1518,7 +1666,7 @@ int CTagLibHelper::GetFlacRating(const wstring& file_path)
 
 }
 
-int CTagLibHelper::GetWmaRating(const wstring& file_path)
+int CTagLibHelper::GetWmaRating(const std::wstring& file_path)
 {
     int rate{};
     ASF::File file(file_path.c_str());
@@ -1531,7 +1679,7 @@ int CTagLibHelper::GetWmaRating(const wstring& file_path)
     return rate;
 }
 
-bool CTagLibHelper::WriteMpegRating(const wstring& file_path, int rate)
+bool CTagLibHelper::WriteMpegRating(const std::wstring& file_path, int rate)
 {
     MPEG::File file(file_path.c_str());
     auto id3v2 = file.ID3v2Tag();
@@ -1543,7 +1691,7 @@ bool CTagLibHelper::WriteMpegRating(const wstring& file_path, int rate)
     return saved;
 }
 
-bool CTagLibHelper::WriteFlacRating(const wstring& file_path, int rate)
+bool CTagLibHelper::WriteFlacRating(const std::wstring& file_path, int rate)
 {
     FLAC::File file(file_path.c_str());
     if (file.isValid())
@@ -1558,7 +1706,7 @@ bool CTagLibHelper::WriteFlacRating(const wstring& file_path, int rate)
     return false;
 }
 
-bool CTagLibHelper::WriteWmaRating(const wstring& file_path, int rate)
+bool CTagLibHelper::WriteWmaRating(const std::wstring& file_path, int rate)
 {
     ASF::File file(file_path.c_str());
     if (file.isValid())

@@ -127,6 +127,8 @@
                 <xs:element name="volume" type="volumeType"></xs:element>
                 <xs:element name="beatIndicator" type="beatIndicatorType"></xs:element>
                 <xs:element name="placeHolder" type="placeHolderType"></xs:element>
+                <xs:element name="playlist" type="playlistType"></xs:element>
+                <xs:element name="playlistIndicator" type="playlistIndicatorType"></xs:element>
             </xs:choice>
         </xs:sequence>
     </xs:group>
@@ -214,9 +216,19 @@
           <xs:documentation>如果为true，则可以通过单击切换显示。</xs:documentation>
         </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="hover_to_switch" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>如果为true，则可以鼠标指向时会显示下一个界面，鼠标移开时恢复。</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <xs:attribute name="show_indicator" type="xs:boolean">
         <xs:annotation>
           <xs:documentation>如果为true，则会在下方显示一个由小圆点组成的切换指示器，点击可以切换显示。</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="indicator_offset" type="xs:int">
+        <xs:annotation>
+          <xs:documentation>指示器垂直方向的偏移量。</xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attributeGroup ref="sharedattr"></xs:attributeGroup>
@@ -235,6 +247,30 @@
             <xs:annotation>
                 <xs:documentation>矩形颜色是否使用主题颜色</xs:documentation>
             </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="color_mode" default="auto">
+          <xs:annotation>
+              <xs:documentation>矩形的颜色模式。</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+              <xs:restriction base="xs:string">
+                  <xs:enumeration value="auto">
+                      <xs:annotation>
+                          <xs:documentation>自动适应界面深浅色主题。</xs:documentation>
+                      </xs:annotation>
+                  </xs:enumeration>
+                  <xs:enumeration value="dark">
+                      <xs:annotation>
+                          <xs:documentation>深色</xs:documentation>
+                      </xs:annotation>
+                  </xs:enumeration>
+                  <xs:enumeration value="light">
+                      <xs:annotation>
+                          <xs:documentation>浅色</xs:documentation>
+                      </xs:annotation>
+                  </xs:enumeration>
+              </xs:restriction>
+          </xs:simpleType>
         </xs:attribute>
         <xs:attributeGroup ref="sharedattr"></xs:attributeGroup>
     </xs:complexType>
@@ -361,6 +397,11 @@
                             <xs:documentation>在深色模式和浅色模式之间切换。</xs:documentation>
                         </xs:annotation>
                     </xs:enumeration>
+                    <xs:enumeration value="locateTrack">
+                        <xs:annotation>
+                            <xs:documentation>播放列表定位到正在播放的曲目。</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
                 </xs:restriction>
             </xs:simpleType>
         </xs:attribute>
@@ -475,6 +516,11 @@
                             <xs:documentation>播放时间</xs:documentation>
                         </xs:annotation>
                     </xs:enumeration>
+                    <xs:enumeration value="play_time_and_volume">
+                        <xs:annotation>
+                            <xs:documentation>显示播放时间，如果正在调整音量，会显示当前音量，一段时间后恢复。</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
                 </xs:restriction>
             </xs:simpleType>
         </xs:attribute>
@@ -493,6 +539,30 @@
             <xs:annotation>
                 <xs:documentation>元素宽度是否跟随文字宽度，即当设定宽度大于文字宽度时收缩到文字宽度。优先级低于元素宽度最值设定。</xs:documentation>
             </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="color_mode" default="auto">
+          <xs:annotation>
+              <xs:documentation>文本的颜色模式。</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+              <xs:restriction base="xs:string">
+                  <xs:enumeration value="auto">
+                      <xs:annotation>
+                          <xs:documentation>自动适应界面深浅色主题。</xs:documentation>
+                      </xs:annotation>
+                  </xs:enumeration>
+                  <xs:enumeration value="dark">
+                      <xs:annotation>
+                          <xs:documentation>深色</xs:documentation>
+                      </xs:annotation>
+                  </xs:enumeration>
+                  <xs:enumeration value="light">
+                      <xs:annotation>
+                          <xs:documentation>浅色</xs:documentation>
+                      </xs:annotation>
+                  </xs:enumeration>
+              </xs:restriction>
+          </xs:simpleType>
         </xs:attribute>
         <xs:attributeGroup ref="sharedattr"></xs:attributeGroup>
     </xs:complexType>
@@ -639,9 +709,28 @@
         <xs:attributeGroup ref="sharedattr"></xs:attributeGroup>
     </xs:complexType>
     <xs:complexType name="placeHolderType">
+      <xs:annotation>
+          <xs:documentation>placeHolder元素是一个占位符，它不显示任何东西。</xs:documentation>
+      </xs:annotation>
+      <xs:attributeGroup ref="sharedattr"></xs:attributeGroup>
+    </xs:complexType>
+    <xs:complexType name="playlistType">
+      <xs:annotation>
+        <xs:documentation>播放列表。</xs:documentation>
+      </xs:annotation>
+      <xs:group ref="elements"></xs:group>
+      <xs:attribute name="item_height" type="xs:int">
         <xs:annotation>
-            <xs:documentation>placeHolder元素是一个占位符，它不显示任何东西。</xs:documentation>
+          <xs:documentation>播放列表项目的高度。</xs:documentation>
         </xs:annotation>
-        <xs:attributeGroup ref="sharedattr"></xs:attributeGroup>
+      </xs:attribute>
+      <xs:attributeGroup ref="sharedattr"></xs:attributeGroup>
+    </xs:complexType>
+    <xs:complexType name="playlistIndicatorType">
+      <xs:annotation>
+        <xs:documentation>指示当前播放列表和一个下拉按钮。</xs:documentation>
+      </xs:annotation>
+      <xs:group ref="elements"></xs:group>
+      <xs:attributeGroup ref="sharedattr"></xs:attributeGroup>
     </xs:complexType>
 </xs:schema>

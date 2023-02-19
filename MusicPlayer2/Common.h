@@ -3,6 +3,7 @@
 #include "CVariant.h"
 #include <initializer_list>
 #include <functional>
+#include <numeric>
 #include <gdiplus.h>
 
 enum class Command
@@ -183,11 +184,11 @@ public:
     static CodeType JudgeCodeType(const string& str, CodeType default_code = CodeType::ANSI, bool auto_utf8 = false);
 
     static bool IsURL(const wstring& str);
-
+private:
     //判断一个字符串是否符合Windows路径的格式
     static bool IsWindowsPath(const wstring& str);
-
-    //判断一个字符串是否符合路径的格式（而不是判断路径是否有效）
+public:
+    //判断一个字符串是否符合绝对路径的格式（而不是判断路径是否有效）
     static bool IsPath(const wstring& str);
 
     //删除一个字符串中指定的字符
@@ -346,6 +347,9 @@ public:
     //安全的格式化字符串，将format_str中形如<%序号%>的字符串替换成初始化列表paras中的元素，元素支持int/double/LPCTSTR/CString格式，序号从1开始
     static CString StringFormat(LPCTSTR format_str, const std::initializer_list<CVariant>& paras);
 
+    //判断str的左侧是否匹配matched_str
+    static bool StringLeftMatch(const std::wstring& str, const std::wstring& matched_str);
+
     //从资源文件中载入字符串，并将资源字符串中形如<%序号%>的字符串替换成可变参数列表中的参数
     static CString LoadTextFormat(UINT id, const std::initializer_list<CVariant>& paras);
 
@@ -373,7 +377,7 @@ public:
     static bool StringIsVersion(LPCTSTR str);
 
     //读取文件内容
-    static bool GetFileContent(const wchar_t* file_path, string& contents_buff, bool binary = true, size_t max_size = 0x500000);
+    static bool GetFileContent(const wchar_t* file_path, string& contents_buff, size_t max_size = 0x500000);
 
     //读取文件内容
     //file_path: 文件的路径
@@ -457,6 +461,9 @@ public:
     static unsigned __int64 GetCurTimeElapse();
 
     static wstring EncodeURIComponent(wstring uri);
+
+    static void OutputDebugStringFormat(LPCTSTR str, ...);
+
     /**
      * @brief Replace all pattern to new_content
      * @param input Input string
@@ -465,6 +472,13 @@ public:
      * @return Result string
     */
     static std::wstring StrReplace(std::wstring& input, std::wstring pattern, std::wstring new_content);
+
+    // https://stackoverflow.com/questions/17074324
+    template <typename T, typename Compare>
+    static std::vector<std::size_t> sort_permutation(const std::vector<T>& vec, Compare& compare);
+
+    template <typename T>
+    static std::vector<T> apply_permutation(const std::vector<T>& vec, const std::vector<std::size_t>& p);
 };
 
 template<class T>
@@ -616,4 +630,23 @@ inline void CCommon::DeleteModelessDialog(T*& dlg)
         delete dlg;
         dlg = nullptr;
     }
+}
+
+template <typename T, typename Compare>
+inline std::vector<std::size_t> CCommon::sort_permutation(const std::vector<T>& vec, Compare& compare)
+{
+    std::vector<std::size_t> p(vec.size());
+    std::iota(p.begin(), p.end(), 0);
+    std::sort(p.begin(), p.end(),
+        [&](std::size_t i, std::size_t j) { return compare(vec[i], vec[j]); });
+    return p;
+}
+
+template <typename T>
+inline std::vector<T> CCommon::apply_permutation(const std::vector<T>& vec, const std::vector<std::size_t>& p)
+{
+    std::vector<T> sorted_vec(vec.size());
+    std::transform(p.begin(), p.end(), sorted_vec.begin(),
+        [&](std::size_t i) { return vec[i]; });
+    return sorted_vec;
 }

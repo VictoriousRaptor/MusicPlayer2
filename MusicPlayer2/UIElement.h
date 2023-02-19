@@ -48,10 +48,12 @@ namespace UiElement
         CRect GetRect() const;      //获取此元素在界面中的矩形区域
         void SetRect(CRect _rect);
         Element* RootElement();       //获取根节点
+        void IterateAllElements(std::function<bool(UiElement::Element*)> func);  //遍历所有界面元素
 
     protected:
         CRect ParentRect(CPlayerUIBase* ui) const;
         virtual void CalculateRect(CPlayerUIBase* ui);           //计算此元素在界面中的矩形区域
+        static void IterateElements(UiElement::Element* parent_element, std::function<bool(UiElement::Element*)> func);
 
         CRect rect;     //用于保存计算得到的元素的矩形区域
     };
@@ -77,12 +79,16 @@ namespace UiElement
         void SetCurrentElement(int index);
         void SwitchDisplay();
         virtual void Draw(CPlayerUIBase* ui) override;
-        bool ckick_to_switch{};
+        bool ckick_to_switch{};     //鼠标点击时切换
+        bool hover_to_switch{};     //鼠标指向时切换
         bool show_indicator{};
+        int indicator_offset{};
+        bool mouse_hover{};
         IPlayerUI::UIButton indicator{};        //指示器
 
     protected:
         std::shared_ptr<Element> CurrentElement();
+        std::shared_ptr<Element> GetElement(int index);
 
         int cur_index{};
     };
@@ -93,6 +99,7 @@ namespace UiElement
     public:
         bool no_corner_radius{};
         bool theme_color{ true };
+        CPlayerUIBase::ColorMode color_mode{ CPlayerUIBase::RCM_AUTO };
         virtual void Draw(CPlayerUIBase* ui) override;
     };
 
@@ -129,15 +136,20 @@ namespace UiElement
             ArtistTitle,    //艺术家 - 标题
             ArtistAlbum,    //艺术家 - 唱片集
             Format,     //歌曲格式
-            PlayTime    //播放时间
+            PlayTime,   //播放时间
+            PlayTimeAndVolume   //显示为播放时间，如果正在调整音量，则显示当前音量，一段时间后恢复
         };
+
         Type type;
         int font_size{ 9 };
         bool width_follow_text{};
+        CPlayerUIBase::ColorMode color_mode{ CPlayerUIBase::RCM_AUTO };
+        bool show_volume{};     //当type为PlayTimeAndVolume时有效，如果为true，则显示为音量
 
         virtual void Draw(CPlayerUIBase* ui) override;
         virtual int GetMaxWidth(CRect parent_rect, CPlayerUIBase* ui) const override;
         std::wstring GetText() const;
+
     private:
         mutable CDrawCommon::ScrollInfo scroll_info;
     };
@@ -208,6 +220,43 @@ namespace UiElement
 
     //节拍指示
     class BeatIndicator : public Element
+    {
+    public:
+        virtual void Draw(CPlayerUIBase* ui) override;
+    };
+
+    //播放列表
+    class Playlist : public Element
+    {
+    public:
+        virtual void Draw(CPlayerUIBase* ui) override;
+        void LButtonUp(CPoint point);
+        void LButtonDown(CPoint point);
+        void MouseMove(CPoint point);
+        bool RButtunUp(CPoint point);
+        void RButtonDown(CPoint point);
+        bool MouseWheel(int delta, CPoint point, CPlayerUIBase* ui);
+        bool DoubleClick(CPoint point);
+
+        void EnsureItemVisible(int index, CPlayerUIBase* ui);  //确保指定项在播放列表中可见
+        void RestrictOffset(CPlayerUIBase* ui);             //将播放列表偏移量限制在正确的范围
+        void CalculateItemRects(CPlayerUIBase* ui);         //计算播放列表中每一项的矩形区域，保存在playlist_info.item_rects中
+
+        int item_height{ 28 };
+
+    private:
+        int GetPlaylistIndexByPoint(CPoint point);
+        void Clicked(CPoint point);     //当播放列表被点击时调用此函数
+
+    private:
+        CPlayerUIBase::UiPlaylistInfo playlist_info;
+        bool mouse_pressed{ false };        //鼠标左键是否按下
+        CPoint mouse_pressed_pos;           //鼠标按下时的位置
+        int mouse_pressed_offset{};         //鼠标按下时播放列表的位移
+    };
+
+    //当前播放列表指示
+    class PlaylistIndicator : public Element
     {
     public:
         virtual void Draw(CPlayerUIBase* ui) override;

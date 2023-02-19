@@ -751,17 +751,42 @@
 #define IDD_FLAC_ENCODE_CFG_DIALOG      573
 #define IDS_SWITCH_TO_LIGHT_MODE        574
 #define IDS_SHORCUT_LEFT                575
+#define IDI_PLAY_AS_NEXT                575
 #define IDS_SHOTCUT_RIGHT               576
+#define IDI_PLAY_IN_PLAYLIST            576
 #define IDS_SHOTCUT_UP                  577
+#define IDI_COPY                        577
 #define IDS_SHOTCUT_DOWN                578
+#define IDI_PLAY_IN_FOLDER              578
 #define IDS_SPACE                       579
+#define IDI_BITRATE                     579
 #define IDS_ALBUM_COVER_PATH_EDIT_TIP_INFO 580
+#define IDI_ICON29                      580
+#define IDI_REVERB                      580
 #define IDS_LOGIN_REQUIRED              581
+#define IDI_ICON28                      581
+#define IDI_HOT_KEY                     581
 #define IDS_LOGGED                      582
+#define IDI_MINI_RESTORE                582
 #define IDS_LASTFM_LOGIN                583
 #define IDS_LOGIN_FAILED                584
+#define IDI_ICON30                      584
+#define IDI_IDI_MINI_RESTORE_D          584
 #define IDS_LASTFM_CACHE_STATUS         585
+#define IDI_ICON31                      585
+#define IDI_LOCATE                      585
 #define IDS_SHOW_HIDE_DESKTOP_LYRIC     586
+#define IDI_ICON32                      586
+#define IDI_EXPAND                      586
+#define IDS_APP_RUNING_INFO             587
+#define IDI_FIX_D                       587
+#define IDS_SHOW_SONG_INFO_WHEN_LYRICS_NOT_EXIST_TIP 588
+#define IDS_EXCLUSIVE_MODE              589
+#define IDS_PLAYLIST_FIX_PATH_ERROR_INFO 590
+#define IDS_PLAYLIST_FIX_PATH_ERROR_COMPLETE 591
+#define IDS_LOCATE                      592
+#define IDS_PLAYLIST_MENU               593
+#define IDS_RECENT_FOLDER_OR_PLAYLIST   594
 #define IDC_STATIC_PATH                 1001
 #define IDC_LIST1                       1002
 #define IDC_PATH_LIST                   1002
@@ -1075,6 +1100,7 @@
 #define IDC_CLEAN_NOT_EXIST_CHECK       1126
 #define IDC_AUTO_RUN_CHECK              1126
 #define IDC_DISABLE_DELETE_FROM_DISK_CHECK 1126
+#define IDC_FFMPEG_ENABLE_WASAPI        1126
 #define IDC_RECORDE_INPUT_COMBO         1127
 #define IDC_CLEAN_NOT_IN_MEDIA_LIB_DIR_CHECK 1127
 #define IDC_OUTPUT_DEVICE_COMBO         1128
@@ -1137,9 +1163,11 @@
 #define IDC_NOTIFY_ICON_AUTO_ADAPT_CHECK 1174
 #define IDC_SHOW_PLAYLIST_TOOLTIP_CHECK 1174
 #define IDC_LYRIC_HIDE_BLANK_LINE_CHECK 1174
+#define IDC_FFMPEG_ENABLE_WASAPI_EXCLUSIVE 1174
 #define IDC_CHECK8                      1175
 #define IDC_BTN_ROUND_CORNERS_CHECK     1175
 #define IDC_FLOAT_PLAYLIST_FOLLOW_MAIN_WND_CHECK 1175
+#define IDC_SHOW_SONG_INFO_IF_LYRIC_NOT_EXIST_CHECK 1175
 #define IDC_UI_STATIC                   1176
 #define IDC_ALBUM_CHECK                 1177
 #define IDC_GENRE_CHECK                 1178
@@ -1191,6 +1219,7 @@
 #define IDC_COVER_LOCATION_STATIC       1222
 #define IDC_CHECK9                      1223
 #define IDC_REMOVE_FILE_NOT_EXIST_WHEN_UPDATE_CHECK 1223
+#define IDC_FFMPEG_MAX_WAIT_TIME        1224
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_OPEN                         32773
@@ -1209,8 +1238,8 @@
 #define ID_32786                        32786
 #define ID_REW                          32787
 #define ID_FF                           32788
-#define ID_32789                        32789
-#define ID_32790                        32790
+#define ID_PLAY                         32789
+#define ID_PAUSE                        32790
 #define ID_32791                        32791
 #define ID_32792                        32792
 #define ID_SET_PATH                     32793
@@ -1634,14 +1663,19 @@
 #define ID_REPEAT_MODE                  33393
 #define ID_PLAY_AS_NEXT                 33394
 #define ID_Menu33395                    33395
+#define ID_MINIMODE_UI_DEFAULT          33396
+#define ID_MINIMODE_UI_MAX              33460
+#define ID_PLAYLIST_FIX_PATH_ERROR      33461
+#define ID_33462                        33462
+#define ID_PLAYLIST_BROWSE_FILE         33463
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        575
-#define _APS_NEXT_COMMAND_VALUE         33396
-#define _APS_NEXT_CONTROL_VALUE         1224
+#define _APS_NEXT_RESOURCE_VALUE        588
+#define _APS_NEXT_COMMAND_VALUE         33464
+#define _APS_NEXT_CONTROL_VALUE         1225
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

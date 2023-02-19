@@ -77,7 +77,19 @@ bool CPlayerUIHelper::IsMidiLyric()
 
 bool CPlayerUIHelper::IsDrawStatusBar()
 {
-    return theApp.m_app_setting_data.always_show_statusbar || CPlayer::GetInstance().m_loading || (theApp.IsMeidaLibUpdating() && theApp.m_media_num_added > 0)
+    return theApp.m_app_setting_data.always_show_statusbar || CPlayer::GetInstance().m_loading || (theApp.IsMeidaLibUpdating() && theApp.m_media_update_para.num_added > 0)
 		/*|| CPlayer::GetInstance().GetABRepeatMode() != CPlayer::AM_NONE*/;
 
+}
+
+double CPlayerUIHelper::GetScrollTextPixel()
+{
+    //界面刷新频率越高，即界面刷新时间间隔越小，则每次滚动的像素值就要越小
+    double pixel = static_cast<double>(theApp.m_app_setting_data.ui_refresh_interval) * 0.025 + 0.2;
+    pixel = static_cast<double>(theApp.GetDPI()) * pixel / 96;
+    if (pixel < 0.1)
+        pixel = 0.1;
+    if (pixel > 0.5 && pixel < 1)
+        pixel = 1;
+    return pixel;
 }

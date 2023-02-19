@@ -4,6 +4,7 @@
 #include "FilePathHelper.h"
 #include <random>
 #include <functional>
+#include <strsafe.h>
 // #include <pathcch.h>
 
 CCommon::CCommon()
@@ -566,14 +567,13 @@ bool CCommon::IsWindowsPath(const wstring& str)
 
 bool CCommon::IsPath(const wstring& str)
 {
-    if (str.size() < 2)		//只有1个字符不是一个路径
+    if (str.size() < 3)
         return false;
 
     bool is_windows_path{ IsWindowsPath(str) };
+    bool is_UNC_path{ str[0] == L'\\' && str[1] == L'\\' };
 
-    bool is_linux_path{ str[0] == L'/' || str[0] == L'\\' };
-
-    if (!is_windows_path && !is_linux_path)
+    if (!is_windows_path && !is_UNC_path)
         return false;
 
     const wstring invalid_chars{ L":*?\"<>|" };
@@ -834,7 +834,7 @@ _tstring CCommon::RelativePathToAbsolutePath(const _tstring& relative_path, cons
     // 否则将relative_path视为相对路径或斜杠开头的绝对路径并与cur_dir拼接
     _tstring result = relative_path;
     _tstring dir = cur_dir;
-    if (!IsWindowsPath(result) && !dir.empty())
+    if (!IsPath(result) && !dir.empty())
     {
         // https://docs.microsoft.com/en-us/windows/win32/api/shlwapi/
         // PathCombine拼接简化两个合法路径，当result为斜杠开头的绝对路径时将其只与dir的盘符拼接
@@ -1390,6 +1390,13 @@ CString CCommon::StringFormat(LPCTSTR format_str, const std::initializer_list<CV
     return str_rtn;
 }
 
+bool CCommon::StringLeftMatch(const std::wstring& str, const std::wstring& matched_str)
+{
+    if (str.size() < matched_str.size())
+        return false;
+    return str.substr(0, matched_str.size()) == matched_str;
+}
+
 CString CCommon::LoadTextFormat(UINT id, const std::initializer_list<CVariant>& paras)
 {
     CString str;
@@ -1545,9 +1552,9 @@ bool CCommon::StringIsVersion(LPCTSTR str)
     return (version_str.GetLength() == 4 || version_str.GetLength() == 5) && version_str[1] == _T('.') && CharIsNumber(version_str[0]) && CharIsNumber(version_str[2]) && CharIsNumber(version_str[3]);
 }
 
-bool CCommon::GetFileContent(const wchar_t* file_path, string& contents_buff, bool binary, size_t max_size)
+bool CCommon::GetFileContent(const wchar_t* file_path, string& contents_buff, size_t max_size)
 {
-    std::ifstream file{ file_path, (binary ? std::ios::binary : std::ios::in) };
+    std::ifstream file{ file_path, std::ios::binary | std::ios::in };
     if (file.fail())
         return false;
     //获取文件长度
@@ -1844,6 +1851,17 @@ wstring CCommon::EncodeURIComponent(wstring uri) {
     StrReplace(uri, L";", L"%3B");
     StrReplace(uri, L"=", L"%3D");
     return uri;
+}
+
+void CCommon::OutputDebugStringFormat(LPCTSTR str, ...)
+{
+    va_list args;
+    va_start(args, str);
+    TCHAR buf[1024] = { 0 };
+    StringCchVPrintf(buf, 1023, str, args);
+    va_end(args);
+    buf[1023] = L'\0';
+    OutputDebugString(buf);
 }
 
 wstring CCommon::StrReplace(wstring& input, wstring pattern, wstring new_content) {

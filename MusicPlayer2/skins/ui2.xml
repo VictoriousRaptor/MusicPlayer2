@@ -1,19 +1,52 @@
 <root xmlns="https://github.com/zhongyang219/MusicPlayer2/skin" xmlns:xsi="http://www.w3.org/2101/XMLSchema-instance" xsi:schemaLocation="https://github.com/zhongyang219/MusicPlayer2/skin ./skin.xsd"
-      name="界面2（重制版）" index="10">
+      name="默认界面" index="10">
   
   <ui type="big">
     <verticalLayout>
       <trackInfo height="20" margin="4" margin-bottom="0"/>
       <text type="format" style="scroll" height="20" margin-left="4" margin-right="4"/>
-      <horizontalLayout margin-left="4" margin-right="4">
-        <verticalLayout>
-          <albumCover square="true" margin="8"/>
-          <text type="title" alignment="center" style="scroll" height="26" font_size="10" />
-          <text type="artist_album" alignment="center" style="scroll" height="20" font_size="9" margin-top="0" />
-          <spectrum draw_reflex="true" fixed_width="true" alignment="center" height="15%" margin-bottom="4" min-height="24" max-height="80"/>
-        </verticalLayout>
-        <lyrics margin="4"/>
-      </horizontalLayout>
+      <stackElement margin-left="4" margin-right="4" margin-bottom="8" show_indicator="true" indicator_offset="-8">
+        <horizontalLayout>
+          <verticalLayout>
+            <albumCover square="true" margin="8"/>
+            <text type="title" alignment="center" style="scroll" height="26" font_size="10" />
+            <text type="artist_album" alignment="center" style="scroll" height="20" font_size="9" margin-top="0" />
+            <spectrum draw_reflex="true" fixed_width="true" alignment="center" height="15%" margin-bottom="4" min-height="24" max-height="80"/>
+          </verticalLayout>
+          <lyrics margin="4" margin-left="8" margin-bottom="16"/>
+        </horizontalLayout>
+        <horizontalLayout>
+          <verticalLayout>
+            <albumCover square="true" margin="8"/>
+            <text type="title" alignment="center" style="scroll" height="26" font_size="10" />
+            <text type="artist_album" alignment="center" style="scroll" height="20" font_size="9" margin-top="0" />
+            <spectrum draw_reflex="true" fixed_width="true" alignment="center" height="15%" margin-bottom="4" min-height="24" max-height="80"/>
+          </verticalLayout>
+          <verticalLayout margin="4" margin-left="8" margin-bottom="16">
+            <playlistIndicator height="30" margin-bottom="4"/>
+            <playlist item_height="32"/>
+          </verticalLayout>
+        </horizontalLayout>
+        <horizontalLayout>
+          <verticalLayout margin="8" margin-bottom="4">
+            <rectangle height="80">
+              <horizontalLayout margin="4">
+                <albumCover square="true" width="64" margin-left="4"/>
+                <verticalLayout margin-left="16">
+                  <text type="title" font_size="10" style="scroll" height="28"/>
+                  <text type="artist_album" font_size="9" style="scroll" height="24"/>
+                </verticalLayout>
+              </horizontalLayout>
+            </rectangle>
+            <lyrics margin-top="14" hide-height="120"/>
+            <spectrum draw_reflex="true" fixed_width="true" alignment="center" height="15%" min-height="24" max-height="80"/>
+          </verticalLayout>
+          <verticalLayout margin="4" margin-left="8" margin-bottom="16">
+            <playlistIndicator height="30" margin-bottom="4"/>
+            <playlist item_height="32"/>
+          </verticalLayout>
+        </horizontalLayout>
+      </stackElement>
       <rectangle height="24" margin="4" margin-bottom="0">
         <toolbar show_translate_btn="true"/>
       </rectangle>
@@ -55,6 +88,7 @@
             </rectangle>
             <lyrics margin-top="14" hide-height="120"/>
           </verticalLayout>
+          <playlist margin="8"/>
         </stackElement>
         <spectrum draw_reflex="true" fixed_width="true" alignment="center" height="15%" margin-bottom="4" min-height="24" max-height="80"/>
       </verticalLayout>

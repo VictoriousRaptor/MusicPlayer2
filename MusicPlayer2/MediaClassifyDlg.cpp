@@ -35,57 +35,6 @@ CMediaClassifyDlg::~CMediaClassifyDlg()
 {
 }
 
-void CMediaClassifyDlg::GetSongsSelected(std::vector<wstring>& song_list) const
-{
-    auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
-    song_list.clear();
-    if (m_left_selected)
-    {
-        //如果选中了左侧列表，则把选中分类下的所有曲目的路径添加到song_list中
-        for (int index : m_left_selected_items)
-        {
-            CString str_selected = GetClassifyListSelectedString(index);
-            auto iter = media_list.find(wstring(str_selected));
-            if (iter != media_list.end())
-            {
-                for (const auto& item : iter->second)
-                {
-                    song_list.push_back(item.file_path);
-                }
-            }
-        }
-    }
-    else
-    {
-        //auto iter = media_list.find(wstring(m_classify_selected));
-        //if (iter != media_list.end())
-        //{
-        //    for (int index : m_right_selected_items)
-        //    {
-        //        if (index >= 0 && index < iter->second.size())
-        //            song_list.push_back(iter->second[index].file_path);
-        //    }
-        //}
-
-        for (int index : m_right_selected_items)
-        {
-            wstring file_path = m_song_list_ctrl.GetItemText(index, COL_PATH).GetString();
-            song_list.push_back(file_path);
-        }
-    }
-}
-
-
-//void CMediaClassifyDlg::GetCurrentSongList(std::vector<SongInfo>& song_list) const
-//{
-//    auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
-//    auto iter = media_list.find(wstring(m_classify_selected));
-//    if (iter != media_list.end())
-//    {
-//        song_list = iter->second;
-//    }
-//}
-
 void CMediaClassifyDlg::RefreshData()
 {
     m_classifer.SetHideOnlyOneClassification(theApp.m_media_lib_setting_data.hide_only_one_classification);
@@ -169,7 +118,7 @@ void CMediaClassifyDlg::ShowClassifyList()
         wstring item_name = item.first;
         if (item_name.empty())
         {
-            item_name = m_default_str.GetString();
+            item_name = m_default_str;
         }
 
         CListCtrlEx::RowData row_data;
@@ -218,7 +167,8 @@ void CMediaClassifyDlg::ShowSongList()
     CWaitCursor wait_cursor;
     auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
 
-    m_list_data.clear();
+    m_list_data_right.clear();
+    m_right_items.clear();
     for (int index : m_left_selected_items)
     {
         CString str_selected = GetClassifyListSelectedString(index);
@@ -228,7 +178,8 @@ void CMediaClassifyDlg::ShowSongList()
         {
             for (const auto& item : iter->second)
             {
-                const SongInfo song{ CSongDataManager::GetInstance().GetSongInfo(item.file_path) };
+                const SongInfo& song{ CSongDataManager::GetInstance().GetSongInfo3(item) };
+                m_right_items.push_back(song);  // 更新显示列表同时存储一份右侧列表SongInfo
                 CListCtrlEx::RowData row_data;
                 row_data[COL_TITLE] = song.GetTitle();
                 row_data[COL_ARTIST] = song.GetArtist();
@@ -240,18 +191,18 @@ void CMediaClassifyDlg::ShowSongList()
                 row_data[COL_GENRE] = song.GetGenre();
                 row_data[COL_BITRATE] = (song.bitrate == 0 ? L"-" : std::to_wstring(song.bitrate));
                 row_data[COL_PATH] = song.file_path;
-                m_list_data.push_back(std::move(row_data));
+                m_list_data_right.push_back(std::move(row_data));
             }
         }
     }
 
-    m_song_list_ctrl.SetListData(&m_list_data);
+    m_song_list_ctrl.SetListData(&m_list_data_right);
 }
 
 CString CMediaClassifyDlg::GetClassifyListSelectedString(int index) const
 {
     CString str_selected = m_classify_list_ctrl.GetItemText(index, 0);
-    if (str_selected == m_default_str)
+    if (str_selected == m_default_str.c_str())
         str_selected.Empty();
     if (str_selected == CCommon::LoadText(_T("<"), IDS_OTHER, _T(">")))
         str_selected = STR_OTHER_CLASSIFY_TYPE;
@@ -372,7 +323,7 @@ bool CMediaClassifyDlg::_OnAddToNewPlaylist(std::wstring& playlist_path)
 
     auto getSongList = [&](std::vector<SongInfo>& song_list)
     {
-        CMediaLibTabDlg::GetSongsSelected(song_list);
+        GetSongsSelected(song_list);
     };
     CMusicPlayerCmdHelper cmd_helper(this);
     return cmd_helper.OnAddToNewPlaylist(getSongList, playlist_path, default_name);
@@ -388,9 +339,35 @@ void CMediaClassifyDlg::CalculateClassifyListColumeWidth(std::vector<int>& width
     width[0] = rect.Width() - width[1] - theApp.DPI(20) - 1;
 }
 
-const CListCtrlEx& CMediaClassifyDlg::GetSongListCtrl() const
+void CMediaClassifyDlg::GetSongsSelected(std::vector<SongInfo>& song_list) const
 {
-    return m_song_list_ctrl;
+    if (m_left_selected)
+    {
+        //如果选中了左侧列表，则把选中分类下的所有曲目的路径添加到song_list中
+        song_list.clear();
+        auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
+        for (int index : m_left_selected_items)
+        {
+            wstring str_selected = GetClassifyListSelectedString(index);
+            auto iter = media_list.find(str_selected);
+            if (iter != media_list.end())
+            {
+                for (const auto& item : iter->second)
+                {
+                    song_list.push_back(item);
+                }
+            }
+        }
+    }
+    else
+    {
+        CMediaLibTabDlg::GetSongsSelected(song_list);
+    }
+}
+
+const vector<SongInfo>& CMediaClassifyDlg::GetSongList() const
+{
+    return m_right_items;
 }
 
 int CMediaClassifyDlg::GetItemSelected() const
@@ -410,14 +387,9 @@ void CMediaClassifyDlg::AfterDeleteFromDisk(const std::vector<SongInfo>& files)
     ShowSongList();
 }
 
-int CMediaClassifyDlg::GetPathColIndex() const
-{
-    return COL_PATH;
-}
-
 wstring CMediaClassifyDlg::GetSelectedString() const
 {
-    return wstring(m_selected_string);
+    return m_selected_string;
 }
 
 void CMediaClassifyDlg::DoDataExchange(CDataExchange* pDX)
@@ -682,37 +654,38 @@ void CMediaClassifyDlg::OnHdnItemclickSongList(NMHDR* pNMHDR, LRESULT* pResult)
         //对右侧列表排序
         if (m_left_selected_items.size() == 1)  //仅当左侧列表选中了一项时处理
         {
-            auto iter = m_classifer.GetMeidaList().find(wstring(m_classify_selected));
-            if (iter != m_classifer.GetMeidaList().end())
+            auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
+            auto iter = media_list.find(m_classify_selected);
+            if (iter != media_list.end())
             {
                 switch (phdr->iItem)
                 {
                 case CMediaClassifyDlg::COL_TITLE:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.title, b.title) < 0; else return CCommon::StringCompareInLocalLanguage(a.title, b.title) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByTitle : SongInfo::ByTitleDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_ARTIST:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.artist, b.artist) < 0; else return CCommon::StringCompareInLocalLanguage(a.artist, b.artist) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByArtist : SongInfo::ByArtistDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_ALBUM:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.album, b.album) < 0; else return CCommon::StringCompareInLocalLanguage(a.album, b.album) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByAlbum : SongInfo::ByAlbumDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_TRACK:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return a.track < b.track; else return a.track > b.track; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByTrack : SongInfo::ByTrackDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_GENRE:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.genre, b.genre) < 0; else return CCommon::StringCompareInLocalLanguage(a.genre, b.genre) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByGenre : SongInfo::ByGenreDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_BITRATE:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return a.bitrate < b.bitrate; else return a.bitrate > b.bitrate; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByBitrate : SongInfo::ByBitrateDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_PATH:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.file_path, b.file_path) < 0; else return CCommon::StringCompareInLocalLanguage(a.file_path, b.file_path) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByPath : SongInfo::ByPathDecending));
                     ShowSongList();
                     break;
                 default:
@@ -748,19 +721,3 @@ void CMediaClassifyDlg::OnDestroy()
     // TODO: 在此处添加消息处理程序代码
     m_classifer.ClearResult();
 }
-
-//
-//void CMediaClassifyDlg::OnDeleteFromDisk()
-//{
-//    // TODO: 在此添加命令处理程序代码
-//    vector<SongInfo> songs_selected;
-//    GetSongsSelected(songs_selected);
-//    CMusicPlayerCmdHelper helper;
-//    if (helper.DeleteSongsFromDisk(songs_selected))
-//    {
-//        //删除成功，则刷新列表
-//        m_classifer.RemoveFiles(songs_selected);
-//        ShowSongList();
-//    }
-//
-//}

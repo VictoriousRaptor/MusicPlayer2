@@ -17,33 +17,38 @@ enum eTagType
 //一首歌曲的信息
 struct SongInfo
 {
-    wstring file_path{};    //歌曲的路径
-    wstring lyric_file{};   //匹配的歌词文件的路径
-    wstring title;      //标题
-    wstring artist;     //艺术家
-    wstring album;      //唱片集
-    wstring comment;    //注释
-    wstring genre;      //流派
-    unsigned __int64 song_id{};         //歌曲对应的网易云音乐中的歌曲ID
-    __int64 last_played_time{};     //上次播放的时间
-    unsigned __int64 modified_time{};        //修改时间
-    int track{};        //音轨序号
-    int listen_time{};          //歌曲累计听的时间（单位为秒）
-    int freq{};         //采样频率
-    Time lengh{};           //歌曲的长度
-    Time start_pos{};       //音频的起始位置，用于cue分轨
-    Time end_pos{};
-    unsigned short year{};      //年份
-    short bitrate{};        //比特率
-    WORD flags{};       //保存一些标志
-    BYTE tag_type{};        //标签的类型（0：其他；1：ID3v1；2：ID3v2；3：APE）
-    BYTE genre_idx{ 255 };      //以字节表示的流派号
-    bool info_acquired{ false };        //如果已经获取到了信息，则为ture
-    bool is_favourite{ false };
-    bool is_cue{ false };       //如果曲目是cue分轨，则为true
-    BYTE rating{ 255 };         //歌曲分级
-    BYTE bits{};                //位深度
-    BYTE channels{};            //声道数
+    wstring file_path{};                // 歌曲的路径
+    wstring lyric_file{};               // 匹配的歌词文件的路径
+    wstring title;                      // 标题
+    wstring artist;                     // 艺术家
+    wstring album;                      // 唱片集
+    wstring comment;                    // 注释
+    wstring genre;                      // 流派
+    wstring cue_file_path;              // cue文件的路径
+    wstring album_artist;               // 唱片集艺术家
+    unsigned __int64 song_id{};         // 歌曲对应的网易云音乐中的歌曲ID
+    __int64 last_played_time{};         // 上次播放的时间<仅在媒体库内使用>
+    unsigned __int64 modified_time{};   // 修改时间
+    int track{};                        // 音轨序号
+    int listen_time{};                  // 歌曲累计听的时间（单位为秒）<仅在媒体库内使用>
+    int freq{};                         // 采样频率
+    //Time lengh{};                       // 歌曲的长度，计划移除
+    Time start_pos{};                   // 音频的起始位置
+    Time end_pos{};                     // 音频的结束位置
+    unsigned short year{};              // 年份
+    short bitrate{};                    // 比特率
+    WORD flags{};                       // 保存一些标志<仅在媒体库内使用>
+    BYTE tag_type{};                    // 标签的类型（0：其他；1：ID3v1；2：ID3v2；3：APE）
+    BYTE genre_idx{ 255 };              // 以字节表示的流派号
+    bool info_acquired{ false };        // 如果已经获取到了信息，则为ture
+    bool is_favourite{ false };         // 是否在我喜欢的音乐列表内<仅在播放列表内使用>
+    bool is_cue{ false };               // 如果曲目是cue分轨，则为true
+    BYTE rating{ 255 };                 // 歌曲分级<仅在媒体库内使用>
+    BYTE bits{};                        // 位深度
+    BYTE channels{};                    // 声道数
+    BYTE total_tracks{};                // 曲目总数
+    BYTE disc_num{};                    // CD序号
+    BYTE total_discs{};                 // CD总数
 
     //定义一组获取和设置一个标志位的方法。
     //func_name：方法的名称（获取标志位的方法名称为func_name，设置标志位的方法名称为Set+func_name）
@@ -93,17 +98,11 @@ struct SongInfo
             return compare_artist < 0;
         else if (compare_album != 0)
             return compare_album < 0;
-        else return a.track < b.track;
+        else return ByTrack(a, b);
     }
     static bool ByArtistDecending(const SongInfo& a, const SongInfo& b)
     {
-        int compare_album = CCommon::StringCompareInLocalLanguage(a.album, b.album);
-        int compare_artist = CCommon::StringCompareInLocalLanguage(a.artist, b.artist);
-        if (compare_artist != 0)
-            return compare_artist > 0;
-        else if (compare_album != 0)
-            return compare_album > 0;
-        else return a.track > b.track;
+        return ByArtist(b, a);
     }
     //根据唱片集的比较函数，用于以唱片集排序
     static bool ByAlbum(const SongInfo& a, const SongInfo& b)
@@ -112,30 +111,62 @@ struct SongInfo
         int compare_artist = CCommon::StringCompareInLocalLanguage(a.artist, b.artist);
         if (compare_album != 0)
             return compare_album < 0;
-        else if (a.track != b.track)        //唱片集相同的情况下比较音轨号
-            return a.track < b.track;
+        else if (a.track != b.track || a.disc_num != b.disc_num)        //唱片集相同的情况下比较音轨号
+            return ByTrack(a, b);
         else                                //音轨号仍然相同，比较艺术家
             return compare_artist < 0;
     }
     static bool ByAlbumDecending(const SongInfo& a, const SongInfo& b)
     {
-        int compare_album = CCommon::StringCompareInLocalLanguage(a.album, b.album);
-        int compare_artist = CCommon::StringCompareInLocalLanguage(a.artist, b.artist);
-        if (compare_album != 0)
-            return compare_album > 0;
-        else if (a.track != b.track)        //唱片集相同的情况下比较音轨号
-            return a.track > b.track;
-        else                                //音轨号仍然相同，比较艺术家
-            return compare_artist > 0;
+        return ByAlbum(b, a);
     }
     //根据音轨序号的比较函数，用于以音轨序号排序
     static bool ByTrack(const SongInfo& a, const SongInfo& b)
     {
-        return a.track < b.track;
+        if (a.disc_num != b.disc_num)
+            return a.disc_num < b.disc_num;
+        else
+            return a.track < b.track;
     }
     static bool ByTrackDecending(const SongInfo& a, const SongInfo& b)
     {
-        return a.track > b.track;
+        return ByTrack(b, a);
+    }
+    //根据流派的比较函数，用于以流派排序
+    static bool ByGenre(const SongInfo& a, const SongInfo& b)
+    {
+        return CCommon::StringCompareInLocalLanguage(a.genre, b.genre) < 0;
+    }
+    static bool ByGenreDecending(const SongInfo& a, const SongInfo& b)
+    {
+        return CCommon::StringCompareInLocalLanguage(a.genre, b.genre) > 0;
+    }
+    //根据比特率的比较函数，用于以比特率排序
+    static bool ByBitrate(const SongInfo& a, const SongInfo& b)
+    {
+        return a.bitrate < b.bitrate;
+    }
+    static bool ByBitrateDecending(const SongInfo& a, const SongInfo& b)
+    {
+        return a.bitrate > b.bitrate;
+    }
+    //根据年份的比较函数，用于以年份排序
+    static bool ByYear(const SongInfo& a, const SongInfo& b)
+    {
+        return a.year < b.year;
+    }
+    static bool ByYearDecending(const SongInfo& a, const SongInfo& b)
+    {
+        return a.year > b.year;
+    }
+    //根据最后播放时间的比较函数，用于以最后播放时间排序
+    static bool ByLastPlay(const SongInfo& a, const SongInfo& b)
+    {
+        return a.last_played_time < b.last_played_time;
+    }
+    static bool ByLastPlayDecending(const SongInfo& a, const SongInfo& b)
+    {
+        return a.last_played_time > b.last_played_time;
     }
 
     //从另一个SongInfo对象复制标签信息
@@ -149,13 +180,19 @@ struct SongInfo
         genre = song_info.genre;
         genre_idx = song_info.genre_idx;
         track = song_info.track;
+        album_artist = song_info.album_artist;
+        total_tracks = song_info.total_tracks;
+        disc_num = song_info.disc_num;
+        total_discs = song_info.total_discs;
         tag_type = song_info.tag_type;
     }
 
     void CopySongInfo(const SongInfo& song_info)
     {
         CopyAudioTag(song_info);
-        lengh = song_info.lengh;
+        //lengh = song_info.lengh;   // 计划移除
+        start_pos = song_info.start_pos;
+        end_pos = song_info.end_pos;
         bitrate = song_info.bitrate;
         //listen_time = song_info.listen_time;
         song_id = song_info.song_id;
@@ -165,6 +202,8 @@ struct SongInfo
         freq = song_info.freq;
         channels = song_info.channels;
         bits = song_info.bits;
+        is_cue = song_info.is_cue;
+        cue_file_path = song_info.cue_file_path;
     }
 
     bool IsTitleEmpty() const
@@ -258,6 +297,16 @@ struct SongInfo
             return file_path == song.file_path && track == song.track;
     }
 
+    Time length() const
+    {
+        return Time(end_pos - start_pos);
+    }
+
+    void setLength(Time length)
+    {
+        end_pos = start_pos + length.toInt();
+    }
+
     void Normalize()
     {
         if (title == CCommon::LoadText(IDS_DEFAULT_TITLE).GetString())
@@ -297,6 +346,11 @@ struct SongInfo
 
     bool IsEmpty() const
     {
-        return file_path.empty() && title.empty() && artist.empty() && album.empty() && comment.empty() && genre.empty() && year == 0 && lengh.isZero();
+        return file_path.empty() && title.empty() && artist.empty() && album.empty() && comment.empty() && genre.empty() && year == 0 && length().isZero();
+    }
+
+    bool IsLastTrack() const
+    {
+        return track == total_tracks;
     }
 };

@@ -29,7 +29,7 @@ void CMediaClassifier::ClassifyMedia()
     m_media_list.clear();
     for (const auto& song_info : CSongDataManager::GetInstance().GetSongData())
     {
-        if (song_info.first.empty())
+        if (song_info.first.path.empty())
             continue;
 
         std::vector<std::wstring> item_names;
@@ -73,7 +73,7 @@ void CMediaClassifier::ClassifyMedia()
         break;
         case CMediaClassifier::CT_TYPE:
         {
-            wstring str_type = CFilePathHelper(song_info.first).GetFileExtension();
+            wstring str_type = CFilePathHelper(song_info.first.path).GetFileExtension();
             item_names.push_back(str_type);
         }
         break;
@@ -121,12 +121,12 @@ void CMediaClassifier::ClassifyMedia()
             if (iter != m_media_list.end())
             {
                 iter->second.push_back(song_info.second);
-                iter->second.back().file_path = song_info.first;
+                iter->second.back().file_path = song_info.first.path;
             }
             else
             {
                 m_media_list[item_name].push_back(song_info.second);
-                m_media_list[item_name].back().file_path = song_info.first;
+                m_media_list[item_name].back().file_path = song_info.first.path;
             }
         }
 
@@ -191,9 +191,9 @@ void CMediaClassifier::ClassifyMedia()
         if (item.first != STR_OTHER_CLASSIFY_TYPE)
         {
             if (m_type == CT_ALBUM)    //“唱片集”类别中，默认按音轨序号排序
-                std::sort(item.second.begin(), item.second.end(), [](const SongInfo& a, const SongInfo& b) {return a.track < b.track; });
+                std::sort(item.second.begin(), item.second.end(), SongInfo::ByTrack);
             else    //其他类别默认按文件路径排序
-                std::sort(item.second.begin(), item.second.end(), [](const SongInfo& a, const SongInfo& b) {return a.file_path < b.file_path; });
+                std::sort(item.second.begin(), item.second.end(), SongInfo::ByPath);
         }
     }
 }

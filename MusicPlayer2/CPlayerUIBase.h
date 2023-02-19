@@ -21,6 +21,8 @@ namespace UiElement
     class Volume;
     class BeatIndicator;
     class StackElement;
+    class Playlist;
+    class PlaylistIndicator;
 }
 
 struct SLayoutData
@@ -58,16 +60,21 @@ public:
     friend class UiElement::Volume;
     friend class UiElement::BeatIndicator;
     friend class UiElement::StackElement;
+    friend class UiElement::Playlist;
+    friend class UiElement::PlaylistIndicator;
 
 public:
     void Init(CDC* pDC) override;
     virtual void DrawInfo(bool reset = false) override final;
     virtual void ClearInfo() override;
 
-    virtual void LButtonDown(CPoint point) override;
+    virtual bool LButtonDown(CPoint point) override;
     virtual void RButtonUp(CPoint point) override;
     virtual void MouseMove(CPoint point) override;
     virtual bool LButtonUp(CPoint point) override;
+    virtual void RButtonDown(CPoint point) override;
+    virtual bool MouseWheel(int delta, CPoint point) override;
+    virtual bool DoubleClick(CPoint point) override;
 
     virtual CRect GetThumbnailClipArea() override;
     void UpdateRepeatModeToolTip();
@@ -90,7 +97,7 @@ public:
     int WidthThreshold() const;
     int DrawAreaHeight() const;     //窄界面模式下显示播放列表时绘图区的高度
 
-    bool PointInControlArea(CPoint point) const;        //判断一个点的位置是否在控件区域
+    virtual bool PointInControlArea(CPoint point) const;        //判断一个点的位置是否在控件区域
     bool PointInTitlebarArea(CPoint point) const;
     bool PointInAppIconArea(CPoint point) const;
     bool PointInMenubarArea(CPoint point) const;
@@ -106,6 +113,8 @@ public:
     };
 
     UiSize GetUiSize() const;
+
+    virtual void UiSizeChanged() {}
 
     static CString GetCmdShortcutKeyForTooltips(UINT id);      //获取用于显示在鼠标提示中的键盘快捷键
 
@@ -142,13 +151,15 @@ public:
         BTN_MENU,               //主菜单按钮
         BTN_FAVOURITE,          //“我喜欢”按钮
         BTN_CLOSE,              //关闭按钮（迷你模式）
-        BTN_RETURN,             //返回按钮（迷你模式）
         BTN_MINIMIZE,           //最小化按钮
         BTN_MAXIMIZE,           //最大化按钮
         BTN_APP_CLOSE,          //关闭按钮
         BTN_ADD_TO_PLAYLIST,    //添加到播放列表按钮
         BTN_SWITCH_DISPLAY,     //切换界面中的stackElement
         BTN_DARK_LIGHT,         //切换深色/浅色模式
+        BTN_LOCATE_TO_CURRENT,  //播放列表定位到当前播放
+        BTN_PLAYLIST_DROP_DOWN, //播放列表下拉按钮
+        BTN_PLAYLIST_MENU,      //播放列表菜单按键
 
         //菜单栏
         MENU_FILE,
@@ -162,6 +173,21 @@ public:
         BTN_INVALID,            //无效的按钮
     };
 
+    enum ColorMode
+    {
+        RCM_AUTO,
+        RCM_DARK,
+        RCM_LIGHT
+    };
+
+    struct UiPlaylistInfo
+    {
+        int playlist_offset{};          //当前播放列表滚动的位移
+        int item_selected{ -1 };        //选中项的序号
+        CDrawCommon::ScrollInfo selected_item_scroll_info;  //绘制选中项滚动文本的结构体
+        std::vector<CRect> item_rects;  //播放列表中每个项目的矩形区域
+    };
+
     //根据按钮的类型获取对应的图标
     //big_icon: 某些按钮提供了不同的尺寸，如果为false，则图标大小为16x16，否则为20x20
     IconRes GetBtnIcon(BtnKey key, bool big_icon = false);
@@ -172,7 +198,6 @@ protected:
         //CRect cover_rect;
         CRect lyric_rect;
         CRect thumbnail_rect;
-        CRect playlist_rect;
     };
 
 protected:
@@ -181,7 +206,7 @@ protected:
     void SetDrawRect();
     void DrawBackground();
     void DrawSongInfo(CRect rect, bool reset = false);
-    void DrawRectangle(const CRect& rect, bool no_corner_radius = false, bool theme_color = true);       //绘制矩形。如果no_corner_radius为true，则总是绘制直角矩形，忽略“使用圆角风格按钮”的设置；theme_color：是否使用主题彦颜色
+    void DrawRectangle(const CRect& rect, bool no_corner_radius = false, bool theme_color = true, ColorMode color_mode = RCM_AUTO);       //绘制矩形。如果no_corner_radius为true，则总是绘制直角矩形，忽略“使用圆角风格按钮”的设置；theme_color：是否使用主题彦颜色
     void DrawToolBar(CRect rect, bool draw_translate_button);
     void DrawToolBarWithoutBackground(CRect rect, bool draw_translate_button);
     void DrawBeatIndicator(CRect rect);
@@ -197,7 +222,8 @@ protected:
     void DrawVolumeButton(CRect rect, bool adj_btn_top = false, bool show_text = true);     //adj_btn_top：点击后弹出的音量调整按钮是否在上方；show_text：是否显示文本
     void DrawABRepeatButton(CRect rect);
     void DrawLyrics(CRect rect, int margin = -1);        //绘制歌词 rect：歌曲区域；margin歌词文本到歌词区域边框的边距
-    void DrawPlaylist(CRect rect);                  //绘制播放列表
+    void DrawPlaylist(CRect rect, UiPlaylistInfo& playlist_info, int item_height);                  //绘制播放列表
+    void DrawCurrentPlaylistIndicator(CRect rect);      //绘制当前播放列表指示
     /**
      * @brief   绘制stackElement的指示器
      * @param   UIButton indicator 指示器信息
@@ -209,6 +235,7 @@ protected:
 
     IconRes* GetRepeatModeIcon();       //获取当前循环模式的图标
     IconRes* GetVolumeIcon();           //获取当前音量的图标
+    void DrawUiIcon(CRect rect, const IconRes& icon, bool dark);
     void DrawUIButton(CRect rect, UIButton& btn, const IconRes& icon);
     void DrawControlButton(CRect rect, UIButton& btn, const IconRes& icon);
     void DrawTextButton(CRect rect, UIButton& btn, LPCTSTR text, bool back_color = false);
@@ -244,9 +271,11 @@ protected:
     double GetScrollTextPixel(bool slower = false);       //计算滚动文本一次滚动的像素值，如果slower为true，则滚动得稍微慢一点
     int CalculateRoundRectRadius(CRect rect);        //计算绘制圆角矩形的半径
 
-    virtual bool IsDrawLargeIcon();        //是否绘制大图标
+    virtual bool IsDrawLargeIcon() const;        //是否绘制大图标
 
     virtual void SwitchStackElement() {}
+
+    bool IsMiniMode() const;
 
 public:
     virtual int GetUiIndex() { return 1; }  //UI的序号，用于区分每个界面，不会为0
@@ -290,7 +319,6 @@ protected:
     const int m_progress_on_top_threshold = theApp.DPI(350);        //当控制条的宽度小于此值，将进度条显示在播放控制按钮的上方
 
     bool m_first_draw{ true };
-    static int m_playlist_offset;
 
 private:
     CBitmap m_mem_bitmap_static;

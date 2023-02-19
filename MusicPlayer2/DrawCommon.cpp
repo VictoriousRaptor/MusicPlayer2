@@ -3,6 +3,16 @@
 #include "GdiPlusTool.h"
 
 
+void CDrawCommon::ScrollInfo::Reset()
+{
+    shift_cnt = 0;
+    shift_dir = false;
+    freez = 20;
+    dir_changed = false;
+}
+
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 CDrawCommon::CDrawCommon()
 {
 }
@@ -94,7 +104,7 @@ void CDrawCommon::DrawWindowText(CRect rect, LPCTSTR lpszString, COLORREF color,
         {
             format = (default_right_align ? DT_RIGHT : 0);
         }
-        m_pDC->DrawText(lpszString, rect, format | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+        m_pDC->DrawText(lpszString, rect, format | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
     }
 }
 
@@ -162,7 +172,7 @@ void CDrawCommon::DrawWindowText(CRect rect, LPCTSTR lpszString, COLORREF color1
     }
 }
 
-void CDrawCommon::DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color, double pixel, bool center, ScrollInfo& scroll_info, bool reset)
+void CDrawCommon::DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color, double pixel, bool center, ScrollInfo& scroll_info, bool reset, bool no_clip_area)
 {
     if (m_pDC->GetSafeHdc() == NULL)
         return;
@@ -179,10 +189,7 @@ void CDrawCommon::DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color,
 
     if (reset)
     {
-        scroll_info.shift_cnt = 0;
-        scroll_info.shift_dir = false;
-        scroll_info.freez = 20;
-        scroll_info.dir_changed = false;
+        scroll_info.Reset();
     }
     m_pDC->SetTextColor(color);
     m_pDC->SetBkMode(TRANSPARENT);
@@ -191,7 +198,10 @@ void CDrawCommon::DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color,
     CSize text_size;    //文本的大小
     int text_top, text_left;        //输出文本的top和left位置
     //设置绘图的剪辑区域，防止文字输出超出控件区域
-    SetDrawArea(m_pDC, rect);
+    if (!no_clip_area)
+    {
+        SetDrawArea(m_pDC, rect);
+    }
     //获取文字的宽度和高度
     text_size = m_pDC->GetTextExtent(lpszString);
     //计算文字的起始坐标
@@ -333,6 +343,9 @@ void CDrawCommon::SetDrawArea(CRect rect)
     CRgn rgn;
     rgn.CreateRectRgnIndirect(rect);
     m_pDC->SelectClipRgn(&rgn);
+
+    if (m_pGraphics != nullptr)
+        m_pGraphics->SetClip(CGdiPlusTool::CRectToGdiplusRect(rect));
 }
 
 void CDrawCommon::DrawBitmap(CBitmap& bitmap, CPoint start_point, CSize size, StretchMode stretch_mode, bool no_clip_area)
@@ -812,4 +825,14 @@ void CDrawCommon::ImageDrawAreaConvert(CSize image_size, CPoint& start_point, CS
             size = draw_size;
         }
     }
+}
+
+CRect CDrawCommon::CalculateCenterIconRect(CRect rect, int icon_size)
+{
+    CRect rc_icon;
+    rc_icon.left = rect.left + (rect.Width() - icon_size) / 2;
+    rc_icon.top = rect.top + (rect.Height() - icon_size) / 2;
+    rc_icon.right = rc_icon.left + icon_size;
+    rc_icon.bottom = rc_icon.top + icon_size;
+    return rc_icon;
 }

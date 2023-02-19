@@ -269,6 +269,7 @@
     <ClInclude Include="MediaLibStatisticsDlg.h" />
     <ClInclude Include="MediaTransControls.h" />
     <ClInclude Include="MenuEditCtrl.h" />
+    <ClInclude Include="MiniModeUserUi.h" />
     <ClInclude Include="PropertyAdvancedDlg.h" />
     <ClInclude Include="PropertyAlbumCoverDlg.h" />
     <ClInclude Include="PropertyDlg.h" />
@@ -424,6 +425,7 @@
     <ClCompile Include="MediaLibStatisticsDlg.cpp" />
     <ClCompile Include="MediaTransControls.cpp" />
     <ClCompile Include="MenuEditCtrl.cpp" />
+    <ClCompile Include="MiniModeUserUi.cpp" />
     <ClCompile Include="PropertyAdvancedDlg.cpp" />
     <ClCompile Include="PropertyAlbumCoverDlg.cpp" />
     <ClCompile Include="PropertyDlg.cpp" />
@@ -556,10 +558,12 @@
     <Image Include="res\album_cover.ico" />
     <Image Include="res\album_d.ico" />
     <Image Include="res\artist_d.ico" />
+    <Image Include="res\bitrate.ico" />
     <Image Include="res\close.ico" />
     <Image Include="res\close_d.ico" />
     <Image Include="res\convert.ico" />
     <Image Include="res\convert_d.ico" />
+    <Image Include="res\copy.ico" />
     <Image Include="res\Cortana_black.bmp" />
     <Image Include="res\Cortana_white.bmp" />
     <Image Include="res\dark_mode.ico" />
@@ -579,6 +583,7 @@
     <Image Include="res\eq_d.ico" />
     <Image Include="res\exit_d.ico" />
     <Image Include="res\expand.ico" />
+    <Image Include="res\expand_d.ico" />
     <Image Include="res\explorer_folder.ico" />
     <Image Include="res\favourite.ico" />
     <Image Include="res\favourite_d.ico" />
@@ -588,16 +593,19 @@
     <Image Include="res\file_relate.ico" />
     <Image Include="res\file_relate_d.ico" />
     <Image Include="res\Find.ico" />
+    <Image Include="res\fix_d.ico" />
     <Image Include="res\folder_explore_d.ico" />
     <Image Include="res\genre_d.ico" />
     <Image Include="res\heart.ico" />
     <Image Include="res\help.ico" />
     <Image Include="res\help_d.ico" />
+    <Image Include="res\hot_key.ico" />
     <Image Include="res\internal_lyric_d.ico" />
     <Image Include="res\light_mode.ico" />
     <Image Include="res\link.ico" />
     <Image Include="res\link_d.ico" />
     <Image Include="res\locate.ico" />
+    <Image Include="res\locate_d.ico" />
     <Image Include="res\lock_d.ico" />
     <Image Include="res\lyric.ico" />
     <Image Include="res\lyric_d.ico" />
@@ -613,6 +621,8 @@
     <Image Include="res\minimize.ico" />
     <Image Include="res\minimize_d.ico" />
     <Image Include="res\mini_d.ico" />
+    <Image Include="res\mini_restore.ico" />
+    <Image Include="res\mini_restore_d.ico" />
     <Image Include="res\MusicPlayer2.ico" />
     <Image Include="res\MusicPlayer2_dark.ico" />
     <Image Include="res\MusicPlayer2_debug.ico" />
@@ -630,7 +640,10 @@
     <Image Include="res\playlist_dock.ico" />
     <Image Include="res\playlist_dock_d.ico" />
     <Image Include="res\playlist_float_d.ico" />
+    <Image Include="res\play_as_next.ico" />
     <Image Include="res\play_dark.ico" />
+    <Image Include="res\play_in_folder.ico" />
+    <Image Include="res\play_in_playlist.ico" />
     <Image Include="res\play_pause_d.ico" />
     <Image Include="res\play_white.ico" />
     <Image Include="res\previous_dark.ico" />
@@ -641,6 +654,7 @@
     <Image Include="res\ReplaceTag.ico" />
     <Image Include="res\restore.ico" />
     <Image Include="res\restore_d.ico" />
+    <Image Include="res\reverb.ico" />
     <Image Include="res\rew_new_d.ico" />
     <Image Include="res\Save.ico" />
     <Image Include="res\save_as_d.ico" />

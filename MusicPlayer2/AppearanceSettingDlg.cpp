@@ -104,6 +104,9 @@ void CAppearanceSettingDlg::SetControlEnable()
     m_default_background_edit.EnableWindow(m_data.enable_background && !m_data.use_desktop_background);
     EnableDlgCtrl(IDC_USE_DESKTOP_BACKGROUND_CHECK, m_data.enable_background);
 
+    EnableDlgCtrl(IDC_SHOW_NEXT_CHECK, m_data.always_show_statusbar);
+    EnableDlgCtrl(IDC_SHOW_FPS_CHECK, m_data.always_show_statusbar);
+
     EnableDlgCtrl(IDC_SHOW_SETTINGS_BTN_CHECK, !m_data.show_window_frame);
     EnableDlgCtrl(IDC_SHOW_SKIN_BTN_CHECK, !m_data.show_window_frame);
     EnableDlgCtrl(IDC_SHOW_MINI_MODE_BTN_CHECK, !m_data.show_window_frame);
@@ -756,7 +759,7 @@ afx_msg LRESULT CAppearanceSettingDlg::OnEditBrowseChanged(WPARAM wParam, LPARAM
         {
             // 虽然开头的.\\不是后续识别必须的但是如果发现缺少还是加上
             // 这是一个非简写的相对路径，绝对路径此处不做处理
-            if (album_name.find(L'\\') != wstring::npos && album_name.front() != L'\\' && !CCommon::IsWindowsPath(album_name))
+            if (album_name.find(L'\\') != wstring::npos && album_name.front() != L'\\' && !CCommon::IsPath(album_name))
             {
                 // 确保相对路径以".\\"开头
                 if (album_name.at(0) == L'.' && album_name.at(1) == L'\\')

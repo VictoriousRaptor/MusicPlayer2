@@ -11,6 +11,7 @@ CCriticalSection CBassCore::m_critical;
 CBASSEncodeLibrary CBassCore::m_bass_encode_lib;
 CBASSWmaLibrary CBassCore::m_bass_wma_lib;
 CBassMixLibrary CBassCore::m_bass_mix_lib;
+bool CBassCore::m_fading = false;
 
 #define CONVERTING_TEMP_FILE_NAME L"converting_5k2019u6271iyt8j"
 
@@ -180,6 +181,7 @@ void CBassCore::UnInitCore()
     {
         BASS_PluginFree(handle);
     }
+    m_fading = false;
 }
 
 unsigned int CBassCore::GetHandle()
@@ -269,7 +271,7 @@ void CBassCore::GetBASSAudioInfo(HSTREAM hStream, SongInfo & song_info, int flag
 {
     //获取长度
     if (flag&AF_LENGTH)
-        song_info.lengh = CBassCore::GetBASSSongLength(hStream);
+        song_info.setLength(CBassCore::GetBASSSongLength(hStream));
     //获取比特率
     if(flag&AF_BITRATE)
     {
@@ -400,11 +402,13 @@ void CBassCore::Pause()
     {
         BASS_ChannelSlideAttribute(m_musicStream, BASS_ATTRIB_VOL, 0, theApp.m_play_setting_data.fade_time);        //音量渐变到0
         KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID);
+        m_fading = true;
         //设置一个淡出时间的定时器
-        SetTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID, theApp.m_play_setting_data.fade_time, [](HWND Arg1, UINT Arg2, UINT_PTR Arg3, DWORD Arg4)
+        SetTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID, 1500, [](HWND Arg1, UINT Arg2, UINT_PTR Arg3, DWORD Arg4)
         {
             KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID);
             BASS_ChannelPause(CPlayer::GetInstance().GetBassHandle());     //当定时器器触发时，即音量已经渐变到0，执行暂停操作
+            m_fading = false;
         });
     }
     else
@@ -421,11 +425,13 @@ void CBassCore::Stop()
     {
         BASS_ChannelSlideAttribute(m_musicStream, BASS_ATTRIB_VOL, 0, theApp.m_play_setting_data.fade_time);
         KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID);
+        m_fading = true;
         SetTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID, theApp.m_play_setting_data.fade_time, [](HWND Arg1, UINT Arg2, UINT_PTR Arg3, DWORD Arg4)
         {
             KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID);
             BASS_ChannelStop(CPlayer::GetInstance().GetBassHandle());
             BASS_ChannelSetPosition(CPlayer::GetInstance().GetBassHandle(), 0, BASS_POS_BYTE);
+            m_fading = false;
         });
     }
     else
@@ -724,7 +730,7 @@ bool CBassCore::EncodeAudio(SongInfo song_info, const wstring& dest_file_path, E
         else
         {
             int cue_position = CBassCore::GetBASSCurrentPosition(hStreamOld != 0 ? hStreamOld : hStream) - song_info.start_pos.toInt();
-            int cue_length = song_info.lengh.toInt();
+            int cue_length = song_info.length().toInt();
             percent = static_cast<int>(cue_position * 100 / cue_length);
             if (percent == 100)
                 break;
@@ -895,6 +901,11 @@ std::wstring CBassCore::GetErrorInfo()
 //            count++; // count it
 //    return count;
 //}
+
+bool CBassCore::IsVolumeFadingOut()
+{
+    return m_fading;
+}
 
 int CBassCore::GetBASSCurrentPosition(HSTREAM hStream)
 {

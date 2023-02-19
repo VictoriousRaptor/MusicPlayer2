@@ -44,7 +44,7 @@ wstring CPropertyDlgHelper::GetMultiLength()
 {
     wstring multi_length = GetMultiValue([](const SongInfo& song)
     {
-        return song.lengh.toString2();
+        return song.length().toString2();
     }, m_song_info);
     if (multi_length == L"-:--")
         multi_length = CCommon::LoadText(IDS_CANNOT_GET_SONG_LENGTH);
@@ -155,7 +155,7 @@ bool CPropertyDlgHelper::IsMultiWritable()
 {
     wstring writable_str = GetMultiValue([](const SongInfo& song)
     {
-        if (!song.is_cue && !COSUPlayerHelper::IsOsuFile(song.file_path) && CAudioTag::IsFileTypeTagWriteSupport(CFilePathHelper(song.file_path).GetFileExtension()))
+        if (song.is_cue || (!COSUPlayerHelper::IsOsuFile(song.file_path) && CAudioTag::IsFileTypeTagWriteSupport(CFilePathHelper(song.file_path).GetFileExtension())))
             return L"true";
         else
             return L"false";

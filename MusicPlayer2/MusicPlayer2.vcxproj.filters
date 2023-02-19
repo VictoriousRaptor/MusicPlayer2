@@ -848,6 +848,9 @@
     <ClInclude Include="FlacEncodeCfgDlg.h">
       <Filter>对话框类\格式转换相关对话框\编码选项对话框</Filter>
     </ClInclude>
+    <ClInclude Include="MiniModeUserUi.h">
+      <Filter>PlayerUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FindDlg.cpp">
@@ -1284,6 +1287,9 @@
     </ClCompile>
     <ClCompile Include="FlacEncodeCfgDlg.cpp">
       <Filter>对话框类\格式转换相关对话框\编码选项对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniModeUserUi.cpp">
+      <Filter>PlayerUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1775,6 +1781,42 @@
       <Filter>资源文件\Icons</Filter>
     </Image>
     <Image Include="res\light_mode.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\play_as_next.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\play_in_playlist.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\copy.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\play_in_folder.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\bitrate.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\reverb.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\hot_key.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\mini_restore.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\mini_restore_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\locate_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\expand_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\fix_d.ico">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

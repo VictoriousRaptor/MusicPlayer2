@@ -66,7 +66,7 @@ public:
     // 实现
 protected:
     HICON m_hIcon;
-    CToolTipCtrl m_Mytip;
+    CToolTipCtrl m_tool_tip;
     //控件变量
     CPlayListCtrl m_playlist_list{ CPlayer::GetInstance().GetPlayList() };		//播放列表控件(初始化时通过构造函数传递歌曲信息的引用，
     //用于支持鼠标指向列表中的项目时显示歌曲信息)
@@ -194,6 +194,7 @@ private:
 public:
     void ShowPlayList(bool highlight_visible = true);
     void SetMenuState(CMenu* pMenu);
+    void SetPlaylistSelected(int index);
 
     static bool IsPointValid(CPoint);
 
@@ -256,9 +257,11 @@ protected:
     afx_msg HCURSOR OnQueryDragIcon();
     DECLARE_MESSAGE_MAP()
 
-    afx_msg void OnSize(UINT nType, int cx, int cy);
+        afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnPlayPause();
+    afx_msg void OnPlay();
+    afx_msg void OnPause();
     afx_msg void OnStop();
     afx_msg void OnPrevious();
     afx_msg void OnNext();
@@ -522,4 +525,5 @@ protected:
     afx_msg LRESULT OnRecentFolderOrPlaylistChanged(WPARAM wParam, LPARAM lParam);
 public:
     afx_msg void OnPlayAsNext();
+    afx_msg void OnPlaylistFixPathError();
 };

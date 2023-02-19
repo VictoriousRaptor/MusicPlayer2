@@ -196,6 +196,7 @@ struct LyricSettingData
     bool use_inner_lyric_first{};				//优先使用内嵌歌词
     bool show_translate{ true };		        //歌词是否显示翻译
     bool donot_show_blank_lines{};              //单行和双行显示模式下不显示空白行
+    bool show_song_info_if_lyric_not_exist{};   //是否在没有歌词时显示歌曲信息
 
     enum LyricSavePolicy		//歌词保存策略
     {
@@ -321,6 +322,12 @@ struct PlaySettingData
     int ffmpeg_core_max_retry_count { 3 };
     /// ffmpeg内核非本地文件重试间隔时间（单位s）
     int ffmpeg_core_url_retry_interval { 5 };
+    /// ffmpeg内核是否启用WASAPI
+    int ffmpeg_core_enable_WASAPI { false };
+    /// ffmpeg内核是否启用WASAPI独占模式
+    int ffmpeg_core_enable_WASAPI_exclusive_mode { false };
+    /// ffmpeg内核seek等操作最大等待时间
+    int ffmpeg_core_max_wait_time { 3000 };
 };
 
 struct GlobalHotKeySettingData
@@ -529,6 +536,7 @@ struct IconSet
     IconRes playlist_dock;
     IconRes help;
     IconRes dark_mode;
+    IconRes mini_restore;
 
     //菜单图标（仅16x16）
     HICON stop_new;
@@ -555,10 +563,18 @@ struct IconSet
     HICON speed_up;
     HICON slow_down;
     HICON shortcut;
+    HICON play_as_next;
+    HICON play_in_playlist;
+    HICON copy;
+    HICON play_in_folder;
+    HICON bitrate;
+    HICON reverb;
+    HICON hot_key;
+    HICON fix;
 
     HICON ok;
     IconRes locate;
-    HICON expand;
+    IconRes expand;
 
     //通知区图标
     HICON notify_icons[MAX_NOTIFY_ICON];
@@ -591,7 +607,8 @@ struct MenuSet
     CMenu m_popup_menu;			    //歌词右键菜单
     CMenu m_main_popup_menu;
     CMenu m_playlist_btn_menu;		//播放列表按钮上的右键菜单
-    CMenu m_playlist_toolbar_menu;
+    CMenu m_playlist_toolbar_menu;      //播放列表工具栏菜单
+    CMenu m_playlist_toolbar_popup_menu;    //播放列表工具栏弹出菜单
     CMenu m_lyric_default_style;     //桌面歌词预设方案菜单
     CMenu m_media_lib_popup_menu;
     CMenu m_media_lib_folder_menu;      //媒体库-文件夹的右键菜单
@@ -634,4 +651,12 @@ public:
 
 private:
     bool& m_flag;
+};
+
+
+struct MediaUpdateThreadPara
+{
+    int num_added{};                       //更新媒体库时新增（包括更新）的音频文件数量
+    int total_num{};
+    bool thread_exit{};             //如果为true，则线程应该退出
 };

@@ -20,10 +20,13 @@ public:
 	virtual void DrawInfo(bool reset = false) = 0;
 	virtual void ClearInfo() = 0;
 
-	virtual void LButtonDown(CPoint point) = 0;
+	virtual bool LButtonDown(CPoint point) = 0;
 	virtual void RButtonUp(CPoint point) = 0;
 	virtual void MouseMove(CPoint point) = 0;
 	virtual bool LButtonUp(CPoint point) = 0;
+    virtual void RButtonDown(CPoint point) = 0;
+    virtual bool MouseWheel(int delta, CPoint point) = 0;
+    virtual bool DoubleClick(CPoint point) = 0;
 
 	virtual CRect GetThumbnailClipArea() = 0;
 

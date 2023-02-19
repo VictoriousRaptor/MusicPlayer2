@@ -7,6 +7,7 @@
 #include "ColorConvert.h"
 #include "DrawCommon.h"
 #include "CMiniModeUI.h"
+#include "CPlayerUIBase.h"
 
 // CMiniModeDlg 对话框
 
@@ -23,6 +24,7 @@ public:
     enum { IDD = IDD_MINI_DIALOG };
 #endif
 
+    void Init();
     void UpdatePlayPauseButton();
     void ShowPlaylist();
     void SetPlayListColor();
@@ -41,6 +43,8 @@ public:
 
     void DrawInfo();
 
+    CPlayerUIBase* GetCurUi();
+
 protected:
 
     int m_position_x;
@@ -52,11 +56,9 @@ protected:
     int& m_item_selected;		//播放列表中鼠标选中的项目，引用MusicPlayerDlg类中的同名变量，当迷你窗口中播放列表选中的项目变化时，同步到主窗口中选中的项目
     vector<int>& m_items_selected;
 
-    CToolTipCtrl m_Mytip;
-    //CMenu m_menu;
-
-    CMiniModeUI::SMiniModeUIData m_ui_data;
-    CMiniModeUI m_ui{ m_ui_data, this };
+    CMiniModeUI::SMiniModeUIData m_ui_data;     //（仅用于默认的迷你模式界面）
+    std::vector<std::shared_ptr<CPlayerUIBase>> m_ui_list;      //保存每个界面类的指针
+    int m_ui_index{};
 
     CDC* m_pDC;
 
@@ -77,6 +79,8 @@ protected:
     void UpdateSongTipInfo();
     void SetTitle();
     void SetAlwaysOnTop();
+    void AdjustWindowSize();
+    bool CalculateWindowSize(int& width, int& height, int& height_with_playlist);
 
     DECLARE_MESSAGE_MAP()
 

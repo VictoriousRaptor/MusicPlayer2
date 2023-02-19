@@ -1,8 +1,8 @@
 ﻿#include "stdafx.h"
 #include "UserUi.h"
 
-CUserUi::CUserUi(UIData& ui_data, CWnd* pMainWnd, const std::wstring& xml_path)
-    : CPlayerUIBase(ui_data, pMainWnd), m_xml_path(xml_path)
+CUserUi::CUserUi(CWnd* pMainWnd, const std::wstring& xml_path)
+    : CPlayerUIBase(theApp.m_ui_data, pMainWnd), m_xml_path(xml_path)
 {
     LoadUi();
 }
@@ -22,9 +22,59 @@ bool CUserUi::IsIndexValid() const
     return m_index != INT_MAX;
 }
 
+void CUserUi::IterateAllElements(std::function<bool(UiElement::Element*)> func)
+{
+    std::shared_ptr<UiElement::Element> draw_element = GetCurrentTypeUi();
+    draw_element->IterateAllElements(func);
+}
+
+void CUserUi::VolumeAdjusted()
+{
+    IterateAllElements([this](UiElement::Element* element) ->bool
+        {
+            UiElement::Text* text_element{ dynamic_cast<UiElement::Text*>(element) };
+            if (text_element != nullptr)
+            {
+                text_element->show_volume = true;
+            }
+            return false;
+        });
+    KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), SHOW_VOLUME_TIMER_ID);
+    //设置一个音量显示时间的定时器（音量显示保持1.5秒）
+    SetTimer(theApp.m_pMainWnd->GetSafeHwnd(), SHOW_VOLUME_TIMER_ID, 1500, NULL);
+}
+
+void CUserUi::ResetVolumeToPlayTime()
+{
+    KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), SHOW_VOLUME_TIMER_ID);
+    IterateAllElements([this](UiElement::Element* element) ->bool
+        {
+            UiElement::Text* text_element{ dynamic_cast<UiElement::Text*>(element) };
+            if (text_element != nullptr)
+            {
+                text_element->show_volume = false;
+            }
+            return false;
+        });
+}
+
+void CUserUi::PlaylistLocateToCurrent()
+{
+    //遍历Playlist元素
+    IterateAllElements([this](UiElement::Element* element) ->bool
+    {
+        UiElement::Playlist* playlist_element{ dynamic_cast<UiElement::Playlist*>(element) };
+        if (playlist_element != nullptr)
+        {
+            playlist_element->EnsureItemVisible(CPlayer::GetInstance().GetIndex(), this);
+        }
+        return false;
+    });
+}
+
 void CUserUi::_DrawInfo(CRect draw_rect, bool reset)
 {
-    std::shared_ptr<UiElement::Element> draw_element = GetCurrentUiType();
+    std::shared_ptr<UiElement::Element> draw_element = GetCurrentTypeUi();
     if (draw_element != nullptr)
     {
         if (m_ui_data.full_screen)  //全屏模式下，最外侧的边距需要加宽
@@ -47,7 +97,7 @@ void CUserUi::_DrawInfo(CRect draw_rect, bool reset)
     m_draw_data.thumbnail_rect = draw_rect;
 }
 
-std::shared_ptr<UiElement::Element> CUserUi::GetCurrentUiType()
+std::shared_ptr<UiElement::Element> CUserUi::GetCurrentTypeUi() const
 {
     std::shared_ptr<UiElement::Element> draw_element;
     //根据不同的窗口大小选择不同的界面元素的根节点绘图
@@ -88,7 +138,7 @@ CString CUserUi::GetUIName()
 
 bool CUserUi::LButtonUp(CPoint point)
 {
-    if (!CPlayerUIBase::LButtonUp(point))
+    if (!CPlayerUIBase::LButtonUp(point) && !CPlayerUIBase::PointInMenubarArea(point) && !CPlayerUIBase::PointInTitlebarArea(point))
     {
         const auto& stack_elements{ GetStackElements() };
         for (const auto& element : stack_elements)
@@ -108,33 +158,190 @@ bool CUserUi::LButtonUp(CPoint point)
                 }
             }
         }
+
+        //遍历Playlist元素
+        IterateAllElements([point](UiElement::Element* element) ->bool
+        {
+            UiElement::Playlist* playlist_element{ dynamic_cast<UiElement::Playlist*>(element) };
+            if (playlist_element != nullptr)
+            {
+                playlist_element->LButtonUp(point);
+            }
+            return false;
+        });
     }
     return false;
 }
 
-void CUserUi::LButtonDown(CPoint point)
+bool CUserUi::LButtonDown(CPoint point)
 {
-    CPlayerUIBase::LButtonDown(point);
-    auto& stack_elements{ GetStackElements() };
-    for (auto& element : stack_elements)
+    if (!CPlayerUIBase::LButtonDown(point) && !CPlayerUIBase::PointInMenubarArea(point) && !CPlayerUIBase::PointInTitlebarArea(point))
     {
-        UiElement::StackElement* stack_element{ dynamic_cast<UiElement::StackElement*>(element.get()) };
-        if (stack_element != nullptr && stack_element->indicator.enable && stack_element->indicator.rect.PtInRect(point) != FALSE)
-            stack_element->indicator.pressed = true;
+        //遍历StackElement
+        auto& stack_elements{ GetStackElements() };
+        for (auto& element : stack_elements)
+        {
+            UiElement::StackElement* stack_element{ dynamic_cast<UiElement::StackElement*>(element.get()) };
+            if (stack_element != nullptr && stack_element->indicator.enable && stack_element->indicator.rect.PtInRect(point) != FALSE)
+                stack_element->indicator.pressed = true;
+        }
+
+        //遍历Playlist元素
+        IterateAllElements([point](UiElement::Element* element) ->bool
+        {
+            UiElement::Playlist* playlist_element{ dynamic_cast<UiElement::Playlist*>(element) };
+            if (playlist_element != nullptr)
+            {
+                playlist_element->LButtonDown(point);
+            }
+            return false;
+        });
     }
+    return false;
 }
 
 void CUserUi::MouseMove(CPoint point)
 {
+    if (!CPlayerUIBase::PointInMenubarArea(point) && !CPlayerUIBase::PointInTitlebarArea(point))
+    {
+        auto& stack_elements{ GetStackElements() };
+        for (auto& element : stack_elements)
+        {
+            UiElement::StackElement* stack_element{ dynamic_cast<UiElement::StackElement*>(element.get()) };
+            if (stack_element != nullptr)
+            {
+                if (stack_element->indicator.enable)
+                    stack_element->indicator.hover = (stack_element->indicator.rect.PtInRect(point) != FALSE);
+                bool hover{ stack_element->GetRect().PtInRect(point) != FALSE };
+                if (!stack_element->mouse_hover && hover)
+                    UpdateToolTipPositionLater();
+                stack_element->mouse_hover = hover;
+            }
+        }
+
+        //遍历Playlist元素
+        IterateAllElements([point](UiElement::Element* element) ->bool
+            {
+                UiElement::Playlist* playlist_element{ dynamic_cast<UiElement::Playlist*>(element) };
+                if (playlist_element != nullptr)
+                {
+                    playlist_element->MouseMove(point);
+                }
+                return false;
+            });
+    }
+    CPlayerUIBase::MouseMove(point);
+}
+
+void CUserUi::MouseLeave()
+{
     auto& stack_elements{ GetStackElements() };
     for (auto& element : stack_elements)
     {
         UiElement::StackElement* stack_element{ dynamic_cast<UiElement::StackElement*>(element.get()) };
-        if (stack_element != nullptr && stack_element->indicator.enable)
-            stack_element->indicator.hover = (stack_element->indicator.rect.PtInRect(point) != FALSE);
+        if (stack_element != nullptr)
+        {
+            //清除StackElement中的mouse_hover状态
+            stack_element->mouse_hover = false;
+        }
     }
+    
+    CPlayerUIBase::MouseLeave();
+}
 
-    CPlayerUIBase::MouseMove(point);
+
+void CUserUi::RButtonUp(CPoint point)
+{
+    //遍历Playlist元素
+    bool rtn = false;
+    if (!CPlayerUIBase::PointInMenubarArea(point) && !CPlayerUIBase::PointInTitlebarArea(point))
+    {
+        IterateAllElements([&](UiElement::Element* element) ->bool
+            {
+                UiElement::Playlist* playlist_element{ dynamic_cast<UiElement::Playlist*>(element) };
+                if (playlist_element != nullptr)
+                {
+                    if (playlist_element->RButtunUp(point))
+                    {
+                        rtn = true;
+                        return true;
+                    }
+                }
+                return false;
+            });
+    }
+    if (!rtn)
+        CPlayerUIBase::RButtonUp(point);
+}
+
+
+void CUserUi::RButtonDown(CPoint point)
+{
+    //遍历Playlist元素
+    if (!CPlayerUIBase::PointInMenubarArea(point) && !CPlayerUIBase::PointInTitlebarArea(point))
+    {
+        IterateAllElements([point](UiElement::Element* element) ->bool
+            {
+                UiElement::Playlist* playlist_element{ dynamic_cast<UiElement::Playlist*>(element) };
+                if (playlist_element != nullptr)
+                {
+                    playlist_element->RButtonDown(point);
+                }
+                return false;
+            });
+    }
+    CPlayerUIBase::RButtonDown(point);
+}
+
+bool CUserUi::MouseWheel(int delta, CPoint point)
+{
+    //遍历Playlist元素
+    bool rtn = false;
+    IterateAllElements([&](UiElement::Element* element) ->bool
+    {
+        UiElement::Playlist* playlist_element{ dynamic_cast<UiElement::Playlist*>(element) };
+        if (playlist_element != nullptr)
+        {
+            if (playlist_element->MouseWheel(delta, point, this))
+            {
+                rtn = true;
+                return true;
+            }
+        }
+        return false;
+    });
+
+    if (rtn)
+        return true;
+    return CPlayerUIBase::MouseWheel(delta, point);
+}
+
+bool CUserUi::DoubleClick(CPoint point)
+{
+    //遍历Playlist元素
+    bool rtn = false;
+    IterateAllElements([&](UiElement::Element* element) ->bool
+        {
+            UiElement::Playlist* playlist_element{ dynamic_cast<UiElement::Playlist*>(element) };
+            if (playlist_element != nullptr)
+            {
+                if (playlist_element->DoubleClick(point))
+                {
+                    rtn = true;
+                    return true;
+                }
+            }
+            return false;
+        });
+
+    if (rtn)
+        return true;
+    return CPlayerUIBase::DoubleClick(point);
+}
+
+void CUserUi::UiSizeChanged()
+{
+    PlaylistLocateToCurrent();
 }
 
 int CUserUi::GetUiIndex()
@@ -236,6 +443,13 @@ std::shared_ptr<UiElement::Element> CUserUi::BuildUiElementFromXmlNode(tinyxml2:
                 std::string str_theme_color = CTinyXml2Helper::ElementAttribute(xml_node, "theme_color");
                 if (!str_theme_color.empty())
                     rectangle->theme_color = CTinyXml2Helper::StringToBool(str_theme_color.c_str());
+                std::string str_color_mode = CTinyXml2Helper::ElementAttribute(xml_node, "color_mode");
+                if (str_color_mode == "dark")
+                    rectangle->color_mode = CPlayerUIBase::RCM_DARK;
+                else if (str_color_mode == "light")
+                    rectangle->color_mode = CPlayerUIBase::RCM_LIGHT;
+                else
+                    rectangle->color_mode = CPlayerUIBase::RCM_AUTO;
             }
         }
         //文本
@@ -281,6 +495,8 @@ std::shared_ptr<UiElement::Element> CUserUi::BuildUiElementFromXmlNode(tinyxml2:
                     text->type = UiElement::Text::Format;
                 else if (str_type == "play_time")
                     text->type = UiElement::Text::PlayTime;
+                else if (str_type == "play_time_and_volume")
+                    text->type = UiElement::Text::PlayTimeAndVolume;
                 //font_size
                 std::string str_font_size = CTinyXml2Helper::ElementAttribute(xml_node, "font_size");
                 text->font_size = atoi(str_font_size.c_str());
@@ -296,6 +512,13 @@ std::shared_ptr<UiElement::Element> CUserUi::BuildUiElementFromXmlNode(tinyxml2:
                     text->width_follow_text = true;
                 else if (str_width_follow_text == "false")
                     text->width_follow_text = false;
+                std::string str_color_mode = CTinyXml2Helper::ElementAttribute(xml_node, "color_mode");
+                if (str_color_mode == "dark")
+                    text->color_mode = CPlayerUIBase::RCM_DARK;
+                else if (str_color_mode == "light")
+                    text->color_mode = CPlayerUIBase::RCM_LIGHT;
+                else
+                    text->color_mode = CPlayerUIBase::RCM_AUTO;
             }
         }
         //专辑封面
@@ -373,6 +596,7 @@ std::shared_ptr<UiElement::Element> CUserUi::BuildUiElementFromXmlNode(tinyxml2:
                 volume->adj_btn_on_top = CTinyXml2Helper::StringToBool(str_adj_btn_on_top.c_str());
             }
         }
+        //堆叠元素
         else if (item_name == "stackElement")
         {
             m_stack_elements[current_build_ui_element].push_back(element);
@@ -382,9 +606,26 @@ std::shared_ptr<UiElement::Element> CUserUi::BuildUiElementFromXmlNode(tinyxml2:
                 std::string str_click_to_switch = CTinyXml2Helper::ElementAttribute(xml_node, "ckick_to_switch");
                 if (!str_click_to_switch.empty())
                     stack_element->ckick_to_switch = CTinyXml2Helper::StringToBool(str_click_to_switch.c_str());
+                std::string str_hover_to_switch = CTinyXml2Helper::ElementAttribute(xml_node, "hover_to_switch");
+                if (!str_hover_to_switch.empty())
+                    stack_element->hover_to_switch = CTinyXml2Helper::StringToBool(str_hover_to_switch.c_str());
                 std::string str_show_indicator = CTinyXml2Helper::ElementAttribute(xml_node, "show_indicator");
                 if (!str_show_indicator.empty())
                     stack_element->show_indicator = CTinyXml2Helper::StringToBool(str_show_indicator.c_str());
+                std::string str_indicator_offset = CTinyXml2Helper::ElementAttribute(xml_node, "indicator_offset");
+                if (!str_indicator_offset.empty())
+                    stack_element->indicator_offset = atoi(str_indicator_offset.c_str());
+            }
+        }
+        //播放列表
+        else if (item_name == "playlist")
+        {
+            UiElement::Playlist* playlist = dynamic_cast<UiElement::Playlist*>(element.get());
+            if (playlist != nullptr)
+            {
+                int item_height = atoi(CTinyXml2Helper::ElementAttribute(xml_node, "item_height"));
+                if (item_height > 0)
+                    playlist->item_height = item_height;
             }
         }
 
@@ -402,9 +643,13 @@ std::shared_ptr<UiElement::Element> CUserUi::BuildUiElementFromXmlNode(tinyxml2:
     return element;
 }
 
-std::vector<std::shared_ptr<UiElement::Element>>& CUserUi::GetStackElements()
+const std::vector<std::shared_ptr<UiElement::Element>>& CUserUi::GetStackElements() const
 {
-    return m_stack_elements[GetCurrentUiType().get()];
+    auto iter = m_stack_elements.find(GetCurrentTypeUi().get());
+    if (iter != m_stack_elements.end())
+        return iter->second;
+    static std::vector<std::shared_ptr<UiElement::Element>> vec_empty;
+    return vec_empty;
 }
 
 void CUserUi::LoadUi()
