@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "MusicPlayerDlg.h"
 #include "MiniModeUserUi.h"
+#include "SongInfoHelper.h"
 
 // CMiniModeDlg 对话框
 
@@ -92,7 +93,7 @@ void CMiniModeDlg::UpdateSongTipInfo()
 void CMiniModeDlg::SetTitle()
 {
     CString title;
-    title = CPlayListCtrl::GetDisplayStr(CPlayer::GetInstance().GetCurrentSongInfo(), theApp.m_media_lib_setting_data.display_format).c_str();
+    title = CSongInfoHelper::GetDisplayStr(CPlayer::GetInstance().GetCurrentSongInfo(), theApp.m_media_lib_setting_data.display_format).c_str();
     if (!title.IsEmpty())
         title += _T(" - ");
     title += APP_NAME;
@@ -462,7 +463,7 @@ BOOL CMiniModeDlg::PreTranslateMessage(MSG* pMsg)
         if (WM_KEYFIRST <= pMsg->message && pMsg->message <= WM_KEYLAST)
         {
             //响应Accelerator中设置的快捷键
-            CMusicPlayerDlg* main_wnd = dynamic_cast<CMusicPlayerDlg*>(theApp.m_pMainWnd);
+            CMusicPlayerDlg* main_wnd = CMusicPlayerDlg::GetInstance();
             if (main_wnd != nullptr && main_wnd->GetAccel() && ::TranslateAccelerator(m_hWnd, main_wnd->GetAccel(), pMsg))
                 return TRUE;
         }
@@ -545,7 +546,7 @@ void CMiniModeDlg::OnInitMenu(CMenu* pMenu)
     CDialogEx::OnInitMenu(pMenu);
 
     // TODO: 在此处添加消息处理程序代码
-    CMusicPlayerDlg* pPlayerDlg = dynamic_cast<CMusicPlayerDlg*>(theApp.m_pMainWnd);
+    CMusicPlayerDlg* pPlayerDlg = CMusicPlayerDlg::GetInstance();
     if (pPlayerDlg != nullptr)
         pPlayerDlg->m_pCurMenu = pMenu;
 

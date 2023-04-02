@@ -666,6 +666,9 @@ wstring CCommon::GetAppDataConfigDir()
     CreateDirectory(app_data_path.c_str(), NULL);       //如果Roaming不存在，则创建它
     app_data_path += L'\\';
     app_data_path += APP_NAME;
+#ifdef _DEBUG
+    app_data_path += L" (Debug)";
+#endif
     app_data_path += L'\\';
     CreateDirectory(app_data_path.c_str(), NULL);       //如果C:/User/用户名/AppData/Roaming/MusicPlayer2不存在，则创建它
 
@@ -1404,6 +1407,31 @@ CString CCommon::LoadTextFormat(UINT id, const std::initializer_list<CVariant>& 
     return StringFormat(str.GetString(), paras);
 }
 
+void CCommon::ReplaceUiStringRes(std::wstring& str)
+{
+    size_t index{};
+    while (true)
+    {
+        index = str.find(L"%(", index);
+        if (index == std::wstring::npos)
+            break;
+        size_t right_bracket_index = str.find(L')', index + 2);
+        if (right_bracket_index == std::wstring::npos)
+            break;
+        int res_id = _wtoi(str.substr(index + 2, right_bracket_index - index - 2).c_str());
+        std::wstring res_str = LoadText(static_cast<UINT>(res_id)).GetString();
+        if (!res_str.empty())
+        {
+            str.replace(index, right_bracket_index - index + 1, res_str);
+            index += res_str.size();
+        }
+        else
+        {
+            index = right_bracket_index + 1;
+        }
+    }
+}
+
 
 void CCommon::SetThreadLanguage(Language language)
 {
@@ -1698,23 +1726,35 @@ bool CCommon::GetNumberBit(unsigned short num, int bit)
     return (num & (1 << bit)) != 0;
 }
 
-CString CCommon::GetTextResource(UINT id, CodeType code_type)
+std::string CCommon::GetTextResourceRawData(UINT id)
 {
-    CString res_str;
+    std::string res_data;
     HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(id), _T("TEXT"));
     if (hRes != NULL)
     {
         HGLOBAL hglobal = LoadResource(NULL, hRes);
         if (hglobal != NULL)
         {
-            if (code_type == CodeType::UTF16LE)
-            {
-                res_str = (const wchar_t*)hglobal;
-            }
-            else
-            {
-                res_str = CCommon::StrToUnicode((const char*)hglobal, code_type).c_str();
-            }
+            res_data = (const char*)hglobal;
+        }
+    }
+    return res_data;
+}
+
+CString CCommon::GetTextResource(UINT id, CodeType code_type)
+{
+    std::string res_data = GetTextResourceRawData(id);
+    res_data.push_back('\0');
+    CString res_str;
+    if (!res_data.empty())
+    {
+        if (code_type == CodeType::UTF16LE)
+        {
+            res_str = (const wchar_t*)res_data.c_str();
+        }
+        else
+        {
+            res_str = CCommon::StrToUnicode(res_data, code_type).c_str();
         }
     }
     return res_str;

@@ -2,12 +2,12 @@
 #include "UIElement.h"
 #include "MusicPlayer2.h"
 #include "MusicPlayerDlg.h"
-
+#include "SongInfoHelper.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-UiElement::Element::Value::Value(bool _is_vertical)
-    : is_vertical(_is_vertical)
+UiElement::Element::Value::Value(bool _is_vertical, Element* _owner)
+    : is_vertical(_is_vertical), owner(_owner)
 {
 }
 
@@ -27,7 +27,7 @@ void UiElement::Element::Value::FromString(const std::string str)
     valid = true;
 }
 
-int UiElement::Element::Value::GetValue(CRect parent_rect, CPlayerUIBase* ui) const
+int UiElement::Element::Value::GetValue(CRect parent_rect) const
 {
     if (is_percentage)      //如果是百分比，根据父元素的大小计算
     {
@@ -38,7 +38,7 @@ int UiElement::Element::Value::GetValue(CRect parent_rect, CPlayerUIBase* ui) co
     }
     else                    //不是百分比，进行根据当前DPI对数值放大
     {
-        return ui->DPI(value);
+        return owner->ui->DPI(value);
     }
 }
 
@@ -47,47 +47,47 @@ bool UiElement::Element::Value::IsValid() const
     return valid;
 }
 
-void UiElement::Element::Draw(CPlayerUIBase* ui)
+void UiElement::Element::Draw()
 {
     for (const auto& item : childLst)
     {
-        if (item != nullptr && item->IsEnable(GetRect(), ui))
-            item->Draw(ui);
+        if (item != nullptr && item->IsEnable(GetRect()))
+            item->Draw();
     }
 }
 
-bool UiElement::Element::IsEnable(CRect parent_rect, CPlayerUIBase* ui) const
+bool UiElement::Element::IsEnable(CRect parent_rect) const
 {
-    if (hide_width.IsValid() && hide_width.GetValue(parent_rect, ui) > parent_rect.Width())
+    if (hide_width.IsValid() && hide_width.GetValue(parent_rect) > parent_rect.Width())
         return false;
-    if (hide_height.IsValid() && hide_height.GetValue(parent_rect, ui) > parent_rect.Height())
+    if (hide_height.IsValid() && hide_height.GetValue(parent_rect) > parent_rect.Height())
         return false;
     return true;
 }
 
-int UiElement::Element::GetMaxWidth(CRect parent_rect, CPlayerUIBase* ui) const
+int UiElement::Element::GetMaxWidth(CRect parent_rect) const
 {
     if (max_width.IsValid())
-        return max_width.GetValue(parent_rect, ui);
+        return max_width.GetValue(parent_rect);
     return INT_MAX;
 }
 
-int UiElement::Element::GetWidth(CRect parent_rect, CPlayerUIBase* ui) const
+int UiElement::Element::GetWidth(CRect parent_rect) const
 {
-    int w{ width.GetValue(parent_rect, ui) };
-    w = min(GetMaxWidth(parent_rect, ui), w);
+    int w{ width.GetValue(parent_rect) };
+    w = min(GetMaxWidth(parent_rect), w);
     if (min_width.IsValid())
-        w = max(min_width.GetValue(parent_rect, ui), w);
+        w = max(min_width.GetValue(parent_rect), w);
     return w;
 }
 
-int UiElement::Element::GetHeight(CRect parent_rect, CPlayerUIBase* ui) const
+int UiElement::Element::GetHeight(CRect parent_rect) const
 {
-    int h{ height.GetValue(parent_rect, ui) };
+    int h{ height.GetValue(parent_rect) };
     if (max_height.IsValid())
-        h = min(max_height.GetValue(parent_rect, ui), h);
+        h = min(max_height.GetValue(parent_rect), h);
     if (min_height.IsValid())
-        h = max(min_height.GetValue(parent_rect, ui), h);
+        h = max(min_height.GetValue(parent_rect), h);
     return h;
 }
 
@@ -111,7 +111,7 @@ UiElement::Element* UiElement::Element::RootElement()
     return ele;
 }
 
-CRect UiElement::Element::ParentRect(CPlayerUIBase* ui) const
+CRect UiElement::Element::ParentRect() const
 {
     if (pParent == nullptr)
     {
@@ -119,12 +119,12 @@ CRect UiElement::Element::ParentRect(CPlayerUIBase* ui) const
     }
     else
     {
-        pParent->CalculateRect(ui);
+        pParent->CalculateRect();
         return pParent->GetRect();
     }
 }
 
-void UiElement::Element::CalculateRect(CPlayerUIBase* ui)
+void UiElement::Element::CalculateRect()
 {
     if (pParent == nullptr)     //根节点的矩形不需要计算
         return;
@@ -140,36 +140,36 @@ void UiElement::Element::CalculateRect(CPlayerUIBase* ui)
     else
     {
         //父元素的矩形区域
-        const CRect rect_parent{ ParentRect(ui) };
+        const CRect rect_parent{ ParentRect() };
         const CRect rect_root{ RootElement()->GetRect() };
         rect = rect_parent;
         if (x.IsValid())
-            rect.left = x.GetValue(rect_parent, ui) + rect_root.left;
+            rect.left = x.GetValue(rect_parent) + rect_root.left;
         if (y.IsValid())
-            rect.top = y.GetValue(rect_parent, ui) + rect_root.top;
+            rect.top = y.GetValue(rect_parent) + rect_root.top;
 
         if (margin_left.IsValid())
-            rect.left = rect_parent.left + margin_left.GetValue(rect_parent, ui);
+            rect.left = rect_parent.left + margin_left.GetValue(rect_parent);
         if (margin_top.IsValid())
-            rect.top = rect_parent.top + margin_top.GetValue(rect_parent, ui);
+            rect.top = rect_parent.top + margin_top.GetValue(rect_parent);
         if (margin_right.IsValid())
-            rect.right = rect_parent.right - margin_right.GetValue(rect_parent, ui);
+            rect.right = rect_parent.right - margin_right.GetValue(rect_parent);
         if (margin_bottom.IsValid())
-            rect.bottom = rect_parent.bottom - margin_bottom.GetValue(rect_parent, ui);
+            rect.bottom = rect_parent.bottom - margin_bottom.GetValue(rect_parent);
 
         if (width.IsValid())
         {
             if (!x.IsValid() && !margin_left.IsValid() && margin_right.IsValid())
-                rect.left = rect.right - width.GetValue(rect_parent, ui);
+                rect.left = rect.right - width.GetValue(rect_parent);
             else
-                rect.right = rect.left + width.GetValue(rect_parent, ui);
+                rect.right = rect.left + width.GetValue(rect_parent);
         }
         if (height.IsValid())
         {
             if (!y.IsValid() && !margin_top.IsValid() && margin_bottom.IsValid())
-                rect.top = rect.bottom - height.GetValue(rect_parent, ui);
+                rect.top = rect.bottom - height.GetValue(rect_parent);
             else
-                rect.bottom = rect.top + height.GetValue(rect_parent, ui);
+                rect.bottom = rect.top + height.GetValue(rect_parent);
         }
     }
 }
@@ -193,10 +193,15 @@ void UiElement::Element::IterateAllElements(std::function<bool(UiElement::Elemen
     IterateElements(this, func);
 }
 
+void UiElement::Element::SetUi(CPlayerUIBase* _ui)
+{
+    ui = _ui;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
+void UiElement::Layout::CalculateChildrenRect()
 {
     //水平布局
     if (type == Horizontal)
@@ -208,7 +213,7 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
         // 第一次遍历，获取固定不变的尺寸数据
         for (const auto& child : childLst)
         {
-            if (!child->IsEnable(GetRect(), ui))            // 设置为不显示时按尺寸为0的固定尺寸元素处理，并忽略此元素边距
+            if (!child->IsEnable(GetRect()))            // 设置为不显示时按尺寸为0的固定尺寸元素处理，并忽略此元素边距
             {
                 size_list.push_back(0);
                 item_fixed_size_num++;
@@ -217,7 +222,7 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
             {
                 if (child->width.IsValid() && child->proportion < 1)    // proportion设定时忽略width
                 {
-                    int width{ child->GetWidth(GetRect(), ui) };
+                    int width{ child->GetWidth(GetRect()) };
                     total_size += width;
                     size_list.push_back(width);
                     item_fixed_size_num++;
@@ -227,9 +232,9 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
                     size_list.push_back(INT_MIN); // 这个子元素尺寸未定
                 }
                 if (child->margin_left.IsValid())
-                    total_size += child->margin_left.GetValue(GetRect(), ui);
+                    total_size += child->margin_left.GetValue(GetRect());
                 if (child->margin_right.IsValid())
-                    total_size += child->margin_right.GetValue(GetRect(), ui);
+                    total_size += child->margin_right.GetValue(GetRect());
             }
         }
 
@@ -262,8 +267,8 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
                     {
                         auto& child{ childLst[i] };
                         int size{ (GetRect().Width() - total_size) * max(child->proportion, 1) / proportion };
-                        int max_size{ child->GetMaxWidth(GetRect(), ui) };
-                        int min_size{ child->min_width.IsValid() ? child->min_width.GetValue(GetRect(), ui) : 0 };
+                        int max_size{ child->GetMaxWidth(GetRect()) };
+                        int min_size{ child->min_width.IsValid() ? child->min_width.GetValue(GetRect()) : 0 };
                         if (size < min_size || max_size < min_size)    // 比例与最值冲突时按最值处理并将此元素标记为固定尺寸元素，由于文本收缩的引入最大值可能比预期小故给与最小值更高的优先级
                         {
                             size_list[i] = min_size;
@@ -313,31 +318,31 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
             CRect child_rect{};
             if (child->height.IsValid())
             {
-                int child_height = child->GetHeight(GetRect(), ui);
-                int max_height = GetRect().Height() - child->margin_top.GetValue(GetRect(), ui) - child->margin_bottom.GetValue(GetRect(), ui);
+                int child_height = child->GetHeight(GetRect());
+                int max_height = GetRect().Height() - child->margin_top.GetValue(GetRect()) - child->margin_bottom.GetValue(GetRect());
                 if (child_height > max_height)
                     child_height = max_height;
                 child_rect.top = GetRect().top + (GetRect().Height() - child_height) / 2;
-                child_rect.bottom = child_rect.top + child->GetHeight(GetRect(), ui);
+                child_rect.bottom = child_rect.top + child->GetHeight(GetRect());
             }
             else
             {
-                child_rect.top = GetRect().top + child->margin_top.GetValue(GetRect(), ui);
-                child_rect.bottom = GetRect().bottom - child->margin_bottom.GetValue(GetRect(), ui);
+                child_rect.top = GetRect().top + child->margin_top.GetValue(GetRect());
+                child_rect.bottom = GetRect().bottom - child->margin_bottom.GetValue(GetRect());
             }
-            if (child->IsEnable(GetRect(), ui))
+            if (child->IsEnable(GetRect()))
             {
                 if (first_child)
                 {
-                    child_rect.left = GetRect().left + child->margin_left.GetValue(GetRect(), ui) + left_space;
+                    child_rect.left = GetRect().left + child->margin_left.GetValue(GetRect()) + left_space;
                     first_child = false;
                 }
                 else
                 {
-                    child_rect.left = w + child->margin_left.GetValue(GetRect(), ui);
+                    child_rect.left = w + child->margin_left.GetValue(GetRect());
                 }
                 child_rect.right = child_rect.left + size_list[i];
-                w = child_rect.right + child->margin_right.GetValue(GetRect(), ui);
+                w = child_rect.right + child->margin_right.GetValue(GetRect());
             }
             else
             {
@@ -357,7 +362,7 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
         // 第一次遍历，获取固定不变的尺寸数据
         for (const auto& child : childLst)
         {
-            if (!child->IsEnable(GetRect(), ui))            // 设置为不显示时按尺寸为0的固定尺寸元素处理
+            if (!child->IsEnable(GetRect()))            // 设置为不显示时按尺寸为0的固定尺寸元素处理
             {
                 size_list.push_back(0);
                 item_fixed_size_num++;
@@ -366,7 +371,7 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
             {
                 if (child->height.IsValid() && child->proportion < 1)       // proportion设定时忽略height
                 {
-                    int height{ child->GetHeight(GetRect(), ui) };
+                    int height{ child->GetHeight(GetRect()) };
                     total_size += height;
                     size_list.push_back(height);
                     item_fixed_size_num++;
@@ -376,9 +381,9 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
                     size_list.push_back(INT_MIN); // 这个子元素尺寸未定
                 }
                 if (child->margin_top.IsValid())
-                    total_size += child->margin_top.GetValue(GetRect(), ui);
+                    total_size += child->margin_top.GetValue(GetRect());
                 if (child->margin_bottom.IsValid())
-                    total_size += child->margin_bottom.GetValue(GetRect(), ui);
+                    total_size += child->margin_bottom.GetValue(GetRect());
             }
         }
 
@@ -411,8 +416,8 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
                     {
                         auto& child{ childLst[i] };
                         int size{ (GetRect().Height() - total_size) * max(child->proportion, 1) / proportion };
-                        int max_size{ child->max_height.IsValid() ? child->max_height.GetValue(GetRect(), ui) : INT_MAX };
-                        int min_size{ child->min_height.IsValid() ? child->min_height.GetValue(GetRect(), ui) : 0 };
+                        int max_size{ child->max_height.IsValid() ? child->max_height.GetValue(GetRect()) : INT_MAX };
+                        int min_size{ child->min_height.IsValid() ? child->min_height.GetValue(GetRect()) : 0 };
                         if (size < min_size || max_size < min_size)                // 比例与最值冲突时按最值处理并将此元素标记为固定尺寸元素
                         {
                             size_list[i] = min_size;
@@ -462,31 +467,31 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
             CRect child_rect{};
             if (child->width.IsValid())
             {
-                int child_width = child->GetWidth(GetRect(), ui);
-                int max_width = GetRect().Width() - child->margin_left.GetValue(GetRect(), ui) - child->margin_right.GetValue(GetRect(), ui);
+                int child_width = child->GetWidth(GetRect());
+                int max_width = GetRect().Width() - child->margin_left.GetValue(GetRect()) - child->margin_right.GetValue(GetRect());
                 if (child_width > max_width)
                     child_width = max_width;
                 child_rect.left = GetRect().left + (GetRect().Width() - child_width) / 2;
-                child_rect.right = child_rect.left + child->GetWidth(GetRect(), ui);
+                child_rect.right = child_rect.left + child->GetWidth(GetRect());
             }
             else
             {
-                child_rect.left = GetRect().left + child->margin_left.GetValue(GetRect(), ui);
-                child_rect.right = GetRect().right - child->margin_right.GetValue(GetRect(), ui);
+                child_rect.left = GetRect().left + child->margin_left.GetValue(GetRect());
+                child_rect.right = GetRect().right - child->margin_right.GetValue(GetRect());
             }
-            if (child->IsEnable(GetRect(), ui))
+            if (child->IsEnable(GetRect()))
             {
                 if (first_child)
                 {
-                    child_rect.top = GetRect().top + child->margin_top.GetValue(GetRect(), ui) + top_space;
+                    child_rect.top = GetRect().top + child->margin_top.GetValue(GetRect()) + top_space;
                     first_child = false;
                 }
                 else
                 {
-                    child_rect.top = h + child->margin_top.GetValue(GetRect(), ui);
+                    child_rect.top = h + child->margin_top.GetValue(GetRect());
                 }
                 child_rect.bottom = child_rect.top + size_list[i];
-                h = child_rect.bottom + child->margin_bottom.GetValue(GetRect(), ui);
+                h = child_rect.bottom + child->margin_bottom.GetValue(GetRect());
             }
             else
             {
@@ -499,11 +504,11 @@ void UiElement::Layout::CalculateChildrenRect(CPlayerUIBase* ui)
 }
 
 
-void UiElement::Layout::Draw(CPlayerUIBase* ui)
+void UiElement::Layout::Draw()
 {
-    CalculateRect(ui);
-    CalculateChildrenRect(ui);
-    Element::Draw(ui);
+    CalculateRect();
+    CalculateChildrenRect();
+    Element::Draw();
 }
 
 
@@ -522,11 +527,11 @@ void UiElement::StackElement::SwitchDisplay()
         cur_index = 0;
 }
 
-void UiElement::StackElement::Draw(CPlayerUIBase* ui)
+void UiElement::StackElement::Draw()
 {
     auto cur_element{ CurrentElement() };
     if (cur_element != nullptr)
-        cur_element->Draw(ui);
+        cur_element->Draw();
     //只绘制一个子元素
     //不调用基类的Draw方法。
 
@@ -560,6 +565,11 @@ void UiElement::StackElement::Draw(CPlayerUIBase* ui)
     ui->ResetDrawArea();
 }
 
+int UiElement::StackElement::GetCurIndex() const
+{
+    return cur_index;
+}
+
 std::shared_ptr<UiElement::Element> UiElement::StackElement::CurrentElement()
 {
     if (hover_to_switch && mouse_hover)
@@ -586,17 +596,17 @@ std::shared_ptr<UiElement::Element> UiElement::StackElement::GetElement(int inde
 }
 
 
-void UiElement::Rectangle::Draw(CPlayerUIBase* ui)
+void UiElement::Rectangle::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     ui->DrawRectangle(rect, no_corner_radius, theme_color, color_mode);
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
-void UiElement::Button::Draw(CPlayerUIBase* ui)
+void UiElement::Button::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     IconRes& icon{ ui->GetBtnIcon(key, big_icon) };
     switch (key)
     {
@@ -614,7 +624,7 @@ void UiElement::Button::Draw(CPlayerUIBase* ui)
         break;
     }
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
 void UiElement::Button::FromString(const std::string& key_type)
@@ -669,9 +679,9 @@ void UiElement::Button::FromString(const std::string& key_type)
         key = CPlayerUIBase::BTN_INVALID;
 }
 
-void UiElement::Text::Draw(CPlayerUIBase* ui)
+void UiElement::Text::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     std::wstring draw_text{ GetText() };
 
     CFont* old_font{};  //原先的字体
@@ -721,17 +731,17 @@ void UiElement::Text::Draw(CPlayerUIBase* ui)
         ui->m_draw.SetFont(old_font);
 
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
-int UiElement::Text::GetMaxWidth(CRect parent_rect, CPlayerUIBase* ui) const
+int UiElement::Text::GetMaxWidth(CRect parent_rect) const
 {
     if (!width_follow_text)
-        return UiElement::Element::GetMaxWidth(parent_rect, ui);
+        return UiElement::Element::GetMaxWidth(parent_rect);
     else
     {
         int width_text{ ui->m_draw.GetTextExtent(GetText().c_str()).cx + ui->DPI(4) };
-        int width_max{ max_width.IsValid() ? max_width.GetValue(parent_rect, ui) : INT_MAX };
+        int width_max{ max_width.IsValid() ? max_width.GetValue(parent_rect) : INT_MAX };
         return min(width_text, width_max);
     }
 }
@@ -788,20 +798,20 @@ std::wstring UiElement::Text::GetText() const
     return draw_text;
 }
 
-void UiElement::AlbumCover::Draw(CPlayerUIBase* ui)
+void UiElement::AlbumCover::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     if (show_info)
         ui->DrawAlbumCoverWithInfo(rect);
     else
         ui->DrawAlbumCover(rect);
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
-void UiElement::AlbumCover::CalculateRect(CPlayerUIBase* ui)
+void UiElement::AlbumCover::CalculateRect()
 {
-    Element::CalculateRect(ui);
+    Element::CalculateRect();
     CRect cover_rect{ rect };
     //如果强制专辑封面为正方形，则在这里计算新的矩形区域
     if (square)
@@ -821,43 +831,43 @@ void UiElement::AlbumCover::CalculateRect(CPlayerUIBase* ui)
     }
 }
 
-void UiElement::Spectrum::Draw(CPlayerUIBase* ui)
+void UiElement::Spectrum::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     if (theApp.m_app_setting_data.show_spectrum)
     {
         ui->m_draw.DrawSpectrum(rect, type, draw_reflex, theApp.m_app_setting_data.spectrum_low_freq_in_center, fixed_width, align);
         ui->ResetDrawArea();
-        Element::Draw(ui);
+        Element::Draw();
     }
 }
 
-bool UiElement::Spectrum::IsEnable(CRect parent_rect, CPlayerUIBase* ui) const
+bool UiElement::Spectrum::IsEnable(CRect parent_rect) const
 {
     if (theApp.m_app_setting_data.show_spectrum)
-        return UiElement::Element::IsEnable(parent_rect, ui);
+        return UiElement::Element::IsEnable(parent_rect);
     return false;
 }
 
-void UiElement::TrackInfo::Draw(CPlayerUIBase* ui)
+void UiElement::TrackInfo::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     ui->DrawSongInfo(rect);
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
-void UiElement::Toolbar::Draw(CPlayerUIBase* ui)
+void UiElement::Toolbar::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     ui->DrawToolBarWithoutBackground(rect, show_translate_btn);
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
-void UiElement::ProgressBar::Draw(CPlayerUIBase* ui)
+void UiElement::ProgressBar::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     if (show_play_time)
     {
         ui->DrawProgressBar(rect, play_time_both_side);
@@ -867,12 +877,12 @@ void UiElement::ProgressBar::Draw(CPlayerUIBase* ui)
         ui->DrawProgess(rect);
     }
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
-void UiElement::Lyrics::Draw(CPlayerUIBase* ui)
+void UiElement::Lyrics::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     if (IsParentRectangle())      //如果父元素中包含了矩形元素，则即使在“外观设置”中勾选了“歌词界面背景”，也不再为歌词区域绘制半透明背景
     {
         if (rect.Height() >= ui->DPI(4))
@@ -884,7 +894,7 @@ void UiElement::Lyrics::Draw(CPlayerUIBase* ui)
     }
     ui->ResetDrawArea();
     ui->m_draw_data.lyric_rect = rect;
-    Element::Draw(ui);
+    Element::Draw();
 }
 
 bool UiElement::Lyrics::IsParentRectangle() const
@@ -899,60 +909,101 @@ bool UiElement::Lyrics::IsParentRectangle() const
     return false;
 }
 
-void UiElement::Volume::Draw(CPlayerUIBase* ui)
+void UiElement::Volume::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     ui->DrawVolumeButton(rect, adj_btn_on_top, show_text);
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
-void UiElement::BeatIndicator::Draw(CPlayerUIBase* ui)
+void UiElement::BeatIndicator::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     ui->DrawBeatIndicator(rect);
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
-void UiElement::Playlist::Draw(CPlayerUIBase * ui)
+void UiElement::Playlist::Draw()
 {
-    CalculateRect(ui);
-    RestrictOffset(ui);
-    CalculateItemRects(ui);
-    ui->DrawPlaylist(rect, playlist_info, ui->DPI(item_height));
+    CalculateRect();
+    RestrictOffset();
+    CalculateItemRects();
+    ui->DrawPlaylist(rect, this, ItemHeight());
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
 void UiElement::Playlist::LButtonUp(CPoint point)
 {
     mouse_pressed = false;
+    scrollbar_handle_pressed = false;
 }
 
 void UiElement::Playlist::LButtonDown(CPoint point)
 {
     if (rect.PtInRect(point))
     {
-        Clicked(point);
+        if (scrollbar_rect.PtInRect(point))
+        {
+            if (scrollbar_handle_rect.PtInRect(point))
+            {
+                scrollbar_handle_pressed = true;
+            }
+        }
+        else
+        {
+            Clicked(point);
+        }
+        mouse_pressed_offset = playlist_offset;
         mouse_pressed = true;
         mouse_pressed_pos = point;
-        mouse_pressed_offset = playlist_info.playlist_offset;
     }
     else
     {
         mouse_pressed = false;
-        playlist_info.item_selected = -1;
+        item_selected = -1;
     }
 }
 
 void UiElement::Playlist::MouseMove(CPoint point)
 {
-    if (rect.PtInRect(point))
+    hover = rect.PtInRect(point);
+    scrollbar_hover = scrollbar_rect.PtInRect(point);
+    if (scrollbar_handle_pressed)
     {
-        if (mouse_pressed)
+        int delta_scrollbar_offset = mouse_pressed_pos.y - point.y;  //滚动条移动的距离
+        //将滚动条移动的距离转换成播放列表的位移
+        int delta_playlist_offset = delta_scrollbar_offset * (ItemHeight() * CPlayer::GetInstance().GetSongNum()) / (rect.Height() - scroll_handle_length_comp);
+        playlist_offset = mouse_pressed_offset - delta_playlist_offset;
+    }
+    else if (mouse_pressed)
+    {
+        playlist_offset = mouse_pressed_offset + (mouse_pressed_pos.y - point.y);
+    }
+
+    //显示鼠标提示
+    if (theApp.m_media_lib_setting_data.show_playlist_tooltip && hover && !scrollbar_hover && !scrollbar_handle_pressed)
+    {
+        int item_size{ static_cast<int>(item_rects.size()) };
+        for (int i{}; i < item_size && i < CPlayer::GetInstance().GetSongNum(); i++)
         {
-            playlist_info.playlist_offset = mouse_pressed_offset + (mouse_pressed_pos.y - point.y);
+            if (item_rects[i].PtInRect(point))
+            {
+                static int last_item_index{ -1 };
+                if (last_item_index != i)
+                {
+                    last_item_index = i;
+                    const SongInfo& song_info = CPlayer::GetInstance().GetPlayList()[i];
+                    bool show_full_path = (CPlayer::GetInstance().IsPlaylistMode() || CPlayer::GetInstance().IsContainSubFolder());
+                    std::wstring str_tip = CSongInfoHelper::GetPlaylistItemToolTip(song_info, true, show_full_path);
+
+                    ui->UpdateMouseToolTip(PLAYLIST_TOOLTIP_INDEX, str_tip.c_str());
+                    ui->UpdateMouseToolTipPosition(PLAYLIST_TOOLTIP_INDEX, item_rects[i]);
+                }
+                break;
+            }
         }
     }
 }
@@ -962,10 +1013,17 @@ bool UiElement::Playlist::RButtunUp(CPoint point)
     if (rect.PtInRect(point))
     {
         mouse_pressed = false;
-        GetCursorPos(&point);
-        CMenu* menu = theApp.m_menu_set.m_list_popup_menu.GetSubMenu(0);
+        CMenu* menu{};
+        if (item_selected >= 0 && !scrollbar_rect.PtInRect(point))
+            menu = theApp.m_menu_set.m_list_popup_menu.GetSubMenu(0);
+        else
+            menu = &theApp.m_menu_set.m_playlist_toolbar_popup_menu;
         if (menu != nullptr)
-            menu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, theApp.m_pMainWnd); //在指定位置显示弹出菜单
+        {
+            CPoint cursor_pos;
+            GetCursorPos(&cursor_pos);
+            menu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, cursor_pos.x, cursor_pos.y, theApp.m_pMainWnd); //在指定位置显示弹出菜单
+        }
         return true;
     }
     return false;
@@ -975,17 +1033,17 @@ bool UiElement::Playlist::RButtunUp(CPoint point)
 void UiElement::Playlist::RButtonDown(CPoint point)
 {
     mouse_pressed = false;
-    if (rect.PtInRect(point))
+    if (rect.PtInRect(point) && !scrollbar_rect.PtInRect(point))
     {
         Clicked(point);
     }
     else
     {
-        playlist_info.item_selected = -1;
+        item_selected = -1;
     }
 }
 
-bool UiElement::Playlist::MouseWheel(int delta, CPoint point, CPlayerUIBase* ui)
+bool UiElement::Playlist::MouseWheel(int delta, CPoint point)
 {
     if (rect.PtInRect(point))
     {
@@ -995,13 +1053,13 @@ bool UiElement::Playlist::MouseWheel(int delta, CPoint point, CPlayerUIBase* ui)
         if (delta < 0)
             step = 1;
         //一次滚动的行数
-        int lines = rect.Height() / ui->DPI(item_height) / 2;
+        int lines = rect.Height() / ItemHeight() / 2;
         if (lines > 3)
             lines = 3;
         if (lines < 1)
             lines = 1;
         step *= lines;
-        playlist_info.playlist_offset = (playlist_info.playlist_offset / ui->DPI(item_height) + step) * ui->DPI(item_height);
+        playlist_offset = (playlist_offset / ItemHeight() + step) * ItemHeight();
         return true;
     }
     return false;
@@ -1009,28 +1067,28 @@ bool UiElement::Playlist::MouseWheel(int delta, CPoint point, CPlayerUIBase* ui)
 
 bool UiElement::Playlist::DoubleClick(CPoint point)
 {
-    if (rect.PtInRect(point) && playlist_info.item_selected >= 0)
+    if (rect.PtInRect(point) && !scrollbar_rect.PtInRect(point) && item_selected >= 0)
     {
         ::SendMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_COMMAND, ID_PLAY_ITEM, 0);
     }
     return false;
 }
 
-void UiElement::Playlist::EnsureItemVisible(int index, CPlayerUIBase* ui)
+void UiElement::Playlist::EnsureItemVisible(int index)
 {
     if (index <= 0)
     {
-        playlist_info.playlist_offset = 0;
+        playlist_offset = 0;
         return;
     }
 
-    CalculateRect(ui);
-    CalculateItemRects(ui);
+    CalculateRect();
+    CalculateItemRects();
 
-    if (index >= static_cast<int>(playlist_info.item_rects.size()))
+    if (index >= static_cast<int>(item_rects.size()))
         return;
 
-    CRect item_rect{ playlist_info.item_rects[index] };
+    CRect item_rect{ item_rects[index] };
     //确定当前项目是否处于可见状态
     if (item_rect.top > rect.top && item_rect.bottom < rect.bottom)
         return;
@@ -1043,42 +1101,53 @@ void UiElement::Playlist::EnsureItemVisible(int index, CPlayerUIBase* ui)
     //指定项目在播放列表下方
     else if (item_rect.bottom > rect.bottom)
         delta_offset = rect.bottom - item_rect.bottom;
-    playlist_info.playlist_offset -= delta_offset;
+    playlist_offset -= delta_offset;
 }
 
-void UiElement::Playlist::RestrictOffset(CPlayerUIBase * ui)
+void UiElement::Playlist::RestrictOffset()
 {
-    int& offset{ playlist_info.playlist_offset };
+    int& offset{ playlist_offset };
     if (offset < 0)
         offset = 0;
-    int offset_max{ ui->DPI(item_height) * CPlayer::GetInstance().GetSongNum() - rect.Height() };
+    int offset_max{ ItemHeight() * CPlayer::GetInstance().GetSongNum() - rect.Height() };
     if (offset_max <= 0)
         offset = 0;
     else if (offset > offset_max)
         offset = offset_max;
 }
 
-void UiElement::Playlist::CalculateItemRects(CPlayerUIBase* ui)
+void UiElement::Playlist::CalculateItemRects()
 {
-    playlist_info.item_rects.resize(CPlayer::GetInstance().GetSongNum());
-    for (int i{}; i < CPlayer::GetInstance().GetSongNum(); i++)
+    item_rects.resize(CPlayer::GetInstance().GetSongNum());
+    for (size_t i{}; i < item_rects.size(); i++)
     {
         //计算每一行的矩形区域
-        int start_y = -playlist_info.playlist_offset + rect.top + i * ui->DPI(item_height);
+        int start_y = -playlist_offset + rect.top + i * ItemHeight();
         CRect rect_item{ rect };
         rect_item.top = start_y;
-        rect_item.bottom = rect_item.top + ui->DPI(item_height);
+        rect_item.bottom = rect_item.top + ItemHeight();
 
         //保存每一行的矩形区域
-        playlist_info.item_rects[i] = rect_item;
+        item_rects[i] = rect_item;
     }
+}
+
+int UiElement::Playlist::ItemHeight() const
+{
+    return ui->DPI(item_height);
+}
+
+void UiElement::Playlist::SetItemSelected(int index)
+{
+    item_selected = index;
+    EnsureItemVisible(index);
 }
 
 int UiElement::Playlist::GetPlaylistIndexByPoint(CPoint point)
 {
-    for (size_t i{}; i < playlist_info.item_rects.size(); i++)
+    for (size_t i{}; i < item_rects.size(); i++)
     {
-        if (playlist_info.item_rects[i].PtInRect(point))
+        if (item_rects[i].PtInRect(point))
             return static_cast<int>(i);
     }
     return -1;
@@ -1086,24 +1155,24 @@ int UiElement::Playlist::GetPlaylistIndexByPoint(CPoint point)
 
 void UiElement::Playlist::Clicked(CPoint point)
 {
-    playlist_info.item_selected = GetPlaylistIndexByPoint(point);
-    CMusicPlayerDlg* pMainWnd = dynamic_cast<CMusicPlayerDlg*>(theApp.m_pMainWnd);
+    item_selected = GetPlaylistIndexByPoint(point);
+    CMusicPlayerDlg* pMainWnd = CMusicPlayerDlg::GetInstance();
     if (pMainWnd != nullptr)
-        pMainWnd->SetPlaylistSelected(playlist_info.item_selected);
-    playlist_info.selected_item_scroll_info.Reset();
+        pMainWnd->SetPlaylistSelected(item_selected);
+    selected_item_scroll_info.Reset();
 }
 
-void UiElement::PlaylistIndicator::Draw(CPlayerUIBase * ui)
+void UiElement::PlaylistIndicator::Draw()
 {
-    CalculateRect(ui);
+    CalculateRect();
     ui->DrawCurrentPlaylistIndicator(rect);
     ui->ResetDrawArea();
-    Element::Draw(ui);
+    Element::Draw();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
-std::shared_ptr<UiElement::Element> CElementFactory::CreateElement(const std::string& name)
+std::shared_ptr<UiElement::Element> CElementFactory::CreateElement(const std::string& name, CPlayerUIBase* ui)
 {
     UiElement::Element* element{};
     if (name == "verticalLayout")
@@ -1149,5 +1218,7 @@ std::shared_ptr<UiElement::Element> CElementFactory::CreateElement(const std::st
     else if (name == "ui" || name == "root" || name == "placeHolder")
         element = new UiElement::Element();
 
+    if (element != nullptr)
+        element->SetUi(ui);
     return std::shared_ptr<UiElement::Element>(element);
 }

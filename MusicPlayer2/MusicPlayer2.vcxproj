@@ -224,6 +224,8 @@
     <Text Include="Help.txt" />
     <Text Include="Help_en_us.txt" />
     <Text Include="ReadMe.txt" />
+    <Text Include="res\Acknowledgement.txt" />
+    <Text Include="res\Acknowledgement_en.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
@@ -304,8 +306,6 @@
     <ClInclude Include="COSUPlayerHelper.h" />
     <ClInclude Include="CoverDownloadCommon.h" />
     <ClInclude Include="CoverDownloadDlg.h" />
-    <ClInclude Include="CPlayerUI.h" />
-    <ClInclude Include="CPlayerUI2.h" />
     <ClInclude Include="CPlayerUIBase.h" />
     <ClInclude Include="CPlayerUIHelper.h" />
     <ClInclude Include="crashtool.h" />
@@ -463,8 +463,6 @@
     <ClCompile Include="COSUPlayerHelper.cpp" />
     <ClCompile Include="CoverDownloadCommon.cpp" />
     <ClCompile Include="CoverDownloadDlg.cpp" />
-    <ClCompile Include="CPlayerUI.cpp" />
-    <ClCompile Include="CPlayerUI2.cpp" />
     <ClCompile Include="CPlayerUIBase.cpp" />
     <ClCompile Include="CPlayerUIHelper.cpp" />
     <ClCompile Include="crashtool.cpp" />
@@ -549,6 +547,8 @@
     <None Include="..\README_en-us.md" />
     <None Include="res\drag.cur" />
     <None Include="res\MusicPlayer2.rc2" />
+    <None Include="skins\ui1.xml" />
+    <None Include="skins\ui2.xml" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\about.bmp" />

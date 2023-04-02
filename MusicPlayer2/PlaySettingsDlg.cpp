@@ -137,6 +137,7 @@ void CPlaySettingsDlg::GetDataFromUi()
     m_data.ffmpeg_core_max_retry_count = m_ffmpeg_max_retry_count.GetValue();
     m_data.ffmpeg_core_url_retry_interval = m_ffmpeg_url_retry_interval.GetValue();
     m_data.ffmpeg_core_max_wait_time = m_ffmpeg_max_wait_time.GetValue();
+    m_data.use_media_trans_control = (IsDlgButtonChecked(IDC_USE_MEDIA_TRANS_CONTORL_CHECK) != FALSE);
 }
 
 void CPlaySettingsDlg::ApplyDataToUi()
@@ -177,6 +178,7 @@ BOOL CPlaySettingsDlg::OnInitDialog()
     m_toolTip.SetMaxTipWidth(theApp.DPI(300));
     m_toolTip.AddTool(GetDlgItem(IDC_MCI_RADIO), CCommon::LoadText(IDS_MCI_KERNAL_TIP));
     m_toolTip.AddTool(GetDlgItem(IDC_FFMPEG_RADIO), CCommon::LoadText(IDS_FFMPEG_CORE));
+    m_toolTip.AddTool(GetDlgItem(IDC_CONTINUE_WHEN_SWITCH_PLAYLIST_CHECK), CCommon::LoadText(IDS_CONTINUE_WHEN_SWITCH_PLAYLIST_TIP));
     m_toolTip.SetWindowPos(&CWnd::wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
 	//初始化各控件的状态
@@ -194,6 +196,16 @@ BOOL CPlaySettingsDlg::OnInitDialog()
 		m_show_taskbar_progress_check.EnableWindow(FALSE);
 		m_show_play_state_icon_chk.EnableWindow(FALSE);
 	}
+
+    if (CWinVersionHelper::IsWindows81OrLater())
+    {
+        CheckDlgButton(IDC_USE_MEDIA_TRANS_CONTORL_CHECK, m_data.use_media_trans_control);
+    }
+    else
+    {
+        CheckDlgButton(IDC_USE_MEDIA_TRANS_CONTORL_CHECK, FALSE);
+        EnableDlgCtrl(IDC_USE_MEDIA_TRANS_CONTORL_CHECK, FALSE);
+    }
 
     bool enable_ffmpeg = false;
     if (CPlayer::GetInstance().IsFfmpegCore()) {
@@ -216,6 +228,7 @@ BOOL CPlaySettingsDlg::OnInitDialog()
         m_bass_radio.SetCheck(TRUE);
 
 	//m_device_info_list.SetColor(theApp.m_app_setting_data.theme_color);
+    m_device_info_list.SetMouseWheelEnable(false);
 	CRect rect;
 	m_device_info_list.GetClientRect(rect);
 	int width0, width1;

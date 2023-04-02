@@ -45,7 +45,11 @@ public:
     CMusicPlayerDlg(wstring cmdLine = wstring(), CWnd* pParent = NULL);	// 标准构造函数
     ~CMusicPlayerDlg();
 
+    static CMusicPlayerDlg* GetInstance();
+
     bool IsTaskbarListEnable() const;
+    HACCEL GetAccel() const { return m_hAccel; }
+    CCortanaLyric& GetCortanaLyric() { return m_cortana_lyric; }
 
     friend class CMusicPlayerCmdHelper;
     friend class CUIWindow;
@@ -61,7 +65,6 @@ protected:
 
 public:
     CMenu* m_pCurMenu{};       //当前弹出的菜单
-    HACCEL GetAccel() const { return m_hAccel; }
 
     // 实现
 protected:
@@ -195,6 +198,7 @@ public:
     void ShowPlayList(bool highlight_visible = true);
     void SetMenuState(CMenu* pMenu);
     void SetPlaylistSelected(int index);
+    void SetUiPlaylistSelected(int index);
 
     static bool IsPointValid(CPoint);
 
@@ -249,6 +253,9 @@ protected:
     bool MoveFloatPlaylistPos();
 
     void Show(bool show);
+
+    void SaveUiData();
+    void LoadUiData();
 
     // 生成的消息映射函数
     virtual BOOL OnInitDialog();

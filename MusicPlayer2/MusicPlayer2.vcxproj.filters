@@ -384,6 +384,8 @@
     <Text Include="Help.txt" />
     <Text Include="Help_en_us.txt" />
     <Text Include="compile_time.txt" />
+    <Text Include="res\Acknowledgement.txt" />
+    <Text Include="res\Acknowledgement_en.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -542,16 +544,10 @@
     <ClInclude Include="SupportedFormatDlg.h">
       <Filter>对话框类\SupportedFormatDlg</Filter>
     </ClInclude>
-    <ClInclude Include="CPlayerUI.h">
-      <Filter>PlayerUI</Filter>
-    </ClInclude>
     <ClInclude Include="CTabCtrlEx.h">
       <Filter>派生的控件类\CTabCtrlEx</Filter>
     </ClInclude>
     <ClInclude Include="CPlayerUIBase.h">
-      <Filter>PlayerUI</Filter>
-    </ClInclude>
-    <ClInclude Include="CPlayerUI2.h">
       <Filter>PlayerUI</Filter>
     </ClInclude>
     <ClInclude Include="IPlayerUI.h">
@@ -997,16 +993,10 @@
     <ClCompile Include="SupportedFormatDlg.cpp">
       <Filter>对话框类\SupportedFormatDlg</Filter>
     </ClCompile>
-    <ClCompile Include="CPlayerUI.cpp">
-      <Filter>PlayerUI</Filter>
-    </ClCompile>
     <ClCompile Include="CTabCtrlEx.cpp">
       <Filter>派生的控件类\CTabCtrlEx</Filter>
     </ClCompile>
     <ClCompile Include="CPlayerUIBase.cpp">
-      <Filter>PlayerUI</Filter>
-    </ClCompile>
-    <ClCompile Include="CPlayerUI2.cpp">
       <Filter>PlayerUI</Filter>
     </ClCompile>
     <ClCompile Include="CMiniModeUI.cpp">
@@ -1305,8 +1295,12 @@
       <Filter>资源文件\Icons</Filter>
     </None>
     <None Include="..\LICENSE" />
-    <None Include="..\README.md" />
-    <None Include="..\README_en-us.md" />
+    <None Include="skins\ui1.xml">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="skins\ui2.xml">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\AddTag.ico">
